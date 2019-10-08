@@ -1,4 +1,4 @@
-config.json
 config.yml
-roles.json
+roles.yml
 .idea/
+.vscode

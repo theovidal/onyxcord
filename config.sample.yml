@@ -1,0 +1,38 @@
+debug: false
+token: Bot's token
+client_id: 549219394513797130
+illustration: https://cdn.becauseofprog.fr/v2/projects/boite-a-bois.png
+name: Boîte à bois
+version: 2.3.0-alpha1
+maintainer:
+  name: Exybore
+  link: https://exybore.becauseofprog.fr
+website: https://github.com/BecauseOfProg/boite-a-bois
+prefix: b@
+color: 12000284
+categories:
+  - id: default
+    name: Non classé
+    emoji: x
+  - id: weather
+    name: Météo
+    emoji: white_sun_rain_clouds
+  - id: games
+    name: Jeux
+    emoji: video_game
+  - id: fun
+    name: Fun
+    emoji: tada
+  - id: utilities
+    name: Utilitaires
+    emoji: wrench
+  - id: teams
+    name: Équipes
+    emoji: pushpin
+weather_api_key: The OpenWeatherMap API key
+database:
+  address: localhost
+  port: 1234
+  username: boite-a-bois
+  password:
+  auth_source: boite-a-bois
