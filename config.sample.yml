@@ -1,15 +1,17 @@
-debug: false
-token: Bot's token
-client_id: 549219394513797130
-illustration: https://cdn.becauseofprog.fr/v2/projects/boite-a-bois.png
-name: Boîte à bois
-version: 2.3.0-alpha1
-maintainer:
-  name: Exybore
-  link: https://exybore.becauseofprog.fr
-website: https://github.com/BecauseOfProg/boite-a-bois
-prefix: b@
-color: 12000284
+dev:
+  debug: false
+  version: 2.3.0-alpha1
+  maintainer:
+    name: Exybore
+    link: https://exybore.becauseofprog.fr
+bot:
+  name: Boîte à bois
+  token: Bot's token
+  id: 549219394513797130
+  illustration: https://cdn.becauseofprog.fr/v2/projects/boite-a-bois.png
+  website: https://github.com/BecauseOfProg/boite-a-bois
+  prefix: b@
+  color: 12000284
 categories:
   - id: default
     name: Non classé
@@ -29,7 +31,8 @@ categories:
   - id: teams
     name: Équipes
     emoji: pushpin
-weather_api_key: The OpenWeatherMap API key
+assets:
+  weather_api_key: The OpenWeatherMap API key
 database:
   address: localhost
   port: 1234
