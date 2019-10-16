@@ -14,13 +14,13 @@ import (
 
 var bot = lib.Bot{
 	Commands: &[]lib.Command{},
-	Config: &lib.Config{},
+	Config:   &lib.Config{},
 }
 
 func main() {
 	config, err := lib.GetConfig(filepath.Base("./config.yml"))
 	if err != nil {
-		log.Fatalf("error: %v", err)
+		log.Fatalf("Error while getting the configuration : %v", err)
 	}
 
 	discord := disgord.New(&disgord.Config{
@@ -28,12 +28,12 @@ func main() {
 	})
 	defer discord.StayConnectedUntilInterrupted()
 
-	bot := lib.Bot{
+	bot = lib.Bot{
 		Commands: &[]lib.Command{},
-		Config: &config,
+		Config:   &config,
 	}
-	
-	// listen for incoming messages and reply with a "hello"
+
+	// Listen for incoming messages and parse them as commands
 	discord.On(disgord.EvtMessageCreate, func(session disgord.Session, context *disgord.MessageCreate) {
 		bot.Session = &session
 		msg := context.Message
@@ -41,16 +41,17 @@ func main() {
 		command := composition[0]
 		arguments := composition[1:]
 		if command == "bd@ping" {
-				_, _ = msg.Reply(session, "pong")
+			_, err = msg.Reply(session, "pong")
+			if err != nil {
+				log.Fatalf("Error while sending a message : %v", err)
+			}
 		}
 		if command == "bd@weather" {
 			commands.Weather.Execute.(func(arguments []string, bot lib.Bot, context *disgord.MessageCreate))(arguments, bot, context)
 		}
 	})
-	
-	// If you want some logic to fire when the bot is ready
-	// (all shards has received their ready event), please use the Ready method.
+
 	discord.Ready(func() {
-		fmt.Println("READY NOW!")
+		fmt.Println("Successfully logged in.")
 	})
 }

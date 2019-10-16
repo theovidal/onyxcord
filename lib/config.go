@@ -38,7 +38,7 @@ type Config struct {
 		Color int
 	}
 	// A list of command categories
-	Categories []struct{
+	Categories []struct {
 		// A unique identifier for them
 		ID string
 		// Their name, displayed in the help command
@@ -72,6 +72,6 @@ func GetConfig(path string) (config Config, err error) {
 
 	config = Config{}
 	err = yaml.Unmarshal([]byte(data), &config)
-	
+
 	return
 }
