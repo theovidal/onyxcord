@@ -11,8 +11,7 @@ import (
 	"github.com/exybore/goweather"
 )
 
-var Weather = lib.Command{
-	Name:        "weather",
+var weather = lib.Command{
 	Description: "Obtenir la météo",
 	Usage:       "weather <localisation>",
 	Category:    "utilities",

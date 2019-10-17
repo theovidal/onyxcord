@@ -12,11 +12,6 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
-var bot = lib.Bot{
-	Commands: &[]lib.Command{},
-	Config:   &lib.Config{},
-}
-
 func main() {
 	config, err := lib.GetConfig(filepath.Base("./config.yml"))
 	if err != nil {
@@ -28,26 +23,53 @@ func main() {
 	})
 	defer discord.StayConnectedUntilInterrupted()
 
-	bot = lib.Bot{
-		Commands: &[]lib.Command{},
+	user, err := discord.GetUser(
+		disgord.NewSnowflake(
+			uint64(config.Bot.ID),
+		),
+	)
+	if err != nil {
+		log.Fatalf("Error while creating the user profile : %v", err)
+		return
+	}
+
+	bot := lib.Bot{
+		Commands: commands.List,
 		Config:   &config,
+		User:     user,
 	}
 
 	// Listen for incoming messages and parse them as commands
 	discord.On(disgord.EvtMessageCreate, func(session disgord.Session, context *disgord.MessageCreate) {
-		bot.Session = &session
 		msg := context.Message
 		composition := strings.Split(msg.Content, " ")
-		command := composition[0]
-		arguments := composition[1:]
-		if command == "bd@ping" {
-			_, err = msg.Reply(session, "pong")
-			if err != nil {
-				log.Fatalf("Error while sending a message : %v", err)
+		if commandName := composition[0]; strings.HasPrefix(commandName, config.Bot.Prefix) {
+			command, exists := bot.Commands[strings.TrimPrefix(commandName, config.Bot.Prefix)]
+			if exists {
+				execution, success := command.Execute.(func(arguments []string, bot lib.Bot, context *disgord.MessageCreate))
+				if success {
+					bot.Session = &session
+					arguments := composition[1:]
+					execution(arguments, bot, context)
+				} else {
+					log.Fatalf("Error while executing a command : %v", err)
+				}
+			} else {
+				_, _ = msg.Respond(
+					session,
+					&disgord.Message{
+						Embeds: []*disgord.Embed{
+							{
+								Title: ":x: Erreur",
+								Description: fmt.Sprintf("La commande %s est inconnue."+
+									"\nFaites `%s@help` pour obtenir la liste des commandes disponibles.",
+									commandName, config.Bot.Prefix),
+								Color: config.Bot.Color,
+							},
+						},
+					},
+				)
 			}
-		}
-		if command == "bd@weather" {
-			commands.Weather.Execute.(func(arguments []string, bot lib.Bot, context *disgord.MessageCreate))(arguments, bot, context)
 		}
 	})
 

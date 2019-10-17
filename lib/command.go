@@ -2,8 +2,6 @@ package lib
 
 // Command represents a command that can be executed by a user
 type Command struct {
-	// Name of the command (e.g : weather)
-	Name string
 	// Description of the command (e.g : Prints weather for a specific location)
 	Description string
 	// Usage of the command (e.g : weather <location>)
