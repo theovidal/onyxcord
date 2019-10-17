@@ -12,6 +12,11 @@ import (
 	"github.com/andersfylling/disgord"
 )
 
+/*
+ * This file is the entry point of the bot, where it's setup.
+ * For the moment is just a bunch of code that'll, in the future, be split between multiple files.
+ */
+
 func main() {
 	config, err := lib.GetConfig(filepath.Base("./config.yml"))
 	if err != nil {
