@@ -13,22 +13,22 @@ bot:
   prefix: b@
   color: 12000284
 categories:
-  - id: default
+  default:
     name: Non classé
     emoji: x
-  - id: weather
+  weather:
     name: Météo
     emoji: white_sun_rain_clouds
-  - id: games
+  games:
     name: Jeux
     emoji: video_game
-  - id: fun
+  fun:
     name: Fun
     emoji: tada
-  - id: utilities
+  utilities:
     name: Utilitaires
     emoji: wrench
-  - id: teams
+  teams:
     name: Équipes
     emoji: pushpin
 assets:
