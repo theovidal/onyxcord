@@ -19,8 +19,7 @@ func main() {
 	// Loading the configuration
 	config, err := lib.GetConfig(filepath.Base("./config.yml"))
 	if err != nil {
-		log.Fatalf("Error while getting the configuration : %v", err)
-		return
+		log.Panicf("Error while getting the configuration : %v", err)
 	}
 
 	// Creating the bot profile
@@ -41,8 +40,7 @@ func main() {
 		),
 	)
 	if err != nil {
-		log.Fatalf("Error while creating the user profile : %v", err)
-		return
+		log.Panicf("Error while creating the user profile : %v", err)
 	}
 
 	bot := lib.Bot{

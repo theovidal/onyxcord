@@ -26,15 +26,34 @@ func (bot *Bot) OnCommand(session disgord.Session, context *disgord.MessageCreat
 	msg := context.Message
 	composition := strings.Split(msg.Content, " ")
 	if commandName := composition[0]; strings.HasPrefix(commandName, bot.Config.Bot.Prefix) {
-		command, exists := bot.Commands[strings.TrimPrefix(commandName, bot.Config.Bot.Prefix)]
+		commandName = strings.TrimPrefix(commandName, bot.Config.Bot.Prefix)
+		command, exists := bot.Commands[commandName]
 		if exists {
-			execution, success := command.Execute.(func(arguments []string, bot Bot, context *disgord.MessageCreate))
+			commandFunction, success := command.Execute.(func(arguments []string, bot Bot, context *disgord.MessageCreate) (err error))
 			if success {
 				bot.Session = &session
 				arguments := composition[1:]
-				execution(arguments, *bot, context)
+				err := commandFunction(arguments, *bot, context)
+				if err != nil {
+					_, _ = msg.Respond(
+						session,
+						&disgord.Message{
+							Embeds: []*disgord.Embed{
+								MakeEmbed(bot.Config, &disgord.Embed{
+									Title: ":x: Erreur",
+									Description: fmt.Sprintf("**%v**\n\n"+
+										"N'hésitez-pas à contacter %s (%s) si vous pensez que c'est un bug !",
+										err, bot.Config.Dev.Maintainer.Name,
+										bot.Config.Dev.Maintainer.Link),
+								}),
+							},
+						},
+					)
+					log.Printf("command %s (executed by %s#%d) failed to execute : %v",
+						commandName, context.Message.Author.Username, context.Message.Author.Discriminator, err)
+				}
 			} else {
-				log.Fatalf("Unknown error while executing a command")
+				log.Panicf("Unknown error while parsing a command")
 			}
 		} else {
 			_, _ = msg.Respond(
@@ -44,7 +63,7 @@ func (bot *Bot) OnCommand(session disgord.Session, context *disgord.MessageCreat
 						{
 							Title: ":x: Erreur",
 							Description: fmt.Sprintf("La commande %s est inconnue."+
-								"\nFaites `%s@help` pour obtenir la liste des commandes disponibles.",
+								"\nExécutez `%shelp` pour obtenir la liste des commandes disponibles.",
 								commandName, bot.Config.Bot.Prefix),
 							Color: bot.Config.Bot.Color,
 						},
