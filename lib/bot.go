@@ -114,3 +114,17 @@ func (bot *Bot) ExecuteCommand(command *Command, arguments []string, context *di
 		log.Panicf("Unknown error while parsing a command")
 	}
 }
+
+// SendEmbed is a helper that sends an embed in the current channel
+func (bot Bot) SendEmbed(embed *disgord.Embed, msg *disgord.Message) (err error) {
+	_, err = msg.Reply(
+		bot.Client,
+		&disgord.CreateMessageParams{
+			Embed: MakeEmbed(
+				bot.Config,
+				embed,
+			),
+		},
+	)
+	return
+}

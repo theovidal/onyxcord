@@ -30,14 +30,9 @@ var help = lib.Command{
 			})
 		}
 
-		_, _ = context.Message.Reply(
-			bot.Client,
-			&disgord.CreateMessageParams{
-				Embed: lib.MakeEmbed(
-					bot.Config,
-					&fullMessage,
-				),
-			},
+		_ = bot.SendEmbed(
+			&fullMessage,
+			context.Message,
 		)
 		return
 	},
