@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"path/filepath"
@@ -35,15 +36,16 @@ func LoadBot(commands map[string]*Command) Bot {
 	client := disgord.New(disgord.Config{
 		BotToken: config.Bot.Token,
 		Presence: &disgord.UpdateStatusPayload{
-			Since:  nil,
-			Game:   nil,
-			Status: fmt.Sprintf("%shelp", config.Bot.Prefix),
-			AFK:    false,
+			Game: &disgord.Activity{
+				Name: fmt.Sprintf("%shelp", config.Bot.Prefix),
+				Type: 2,
+			},
 		},
 	})
 
 	// Creating the user profile
 	user, err := client.GetUser(
+		context.Background(),
 		disgord.NewSnowflake(
 			uint64(config.Bot.ID),
 		),
@@ -72,6 +74,7 @@ func (bot *Bot) OnCommand(session disgord.Session, context *disgord.MessageCreat
 			bot.ExecuteCommand(command, composition[1:], context)
 		} else {
 			_, _ = context.Message.Reply(
+				context.Ctx,
 				bot.Client,
 				&disgord.CreateMessageParams{
 					Embed: MakeEmbed(bot.Config, &disgord.Embed{
@@ -96,14 +99,16 @@ func (bot *Bot) ExecuteCommand(command *Command, arguments []string, context *di
 		err := commandFunction(arguments, *bot, context)
 		if err != nil {
 			_, _ = context.Message.Reply(
+				context.Ctx,
 				bot.Client,
 				&disgord.CreateMessageParams{
 					Embed: MakeEmbed(bot.Config, &disgord.Embed{
-						Title: ":x: Erreur",
+						Title: ":x: Erreur dans l'exécution de la commande",
 						Description: fmt.Sprintf("**%v**\n\n"+
-							"N'hésitez-pas à contacter %s (%s) si vous pensez que c'est un bug !",
+							"N'hésitez-pas à contacter %s (%s) si vous pensez que c'est un bogue !",
 							err, bot.Config.Dev.Maintainer.Name,
 							bot.Config.Dev.Maintainer.Link),
+						Color: 12000284,
 					}),
 				},
 			)
@@ -116,8 +121,9 @@ func (bot *Bot) ExecuteCommand(command *Command, arguments []string, context *di
 }
 
 // SendEmbed is a helper that sends an embed in the current channel
-func (bot Bot) SendEmbed(embed *disgord.Embed, msg *disgord.Message) (err error) {
+func (bot Bot) SendEmbed(context context.Context, embed *disgord.Embed, msg *disgord.Message) (err error) {
 	_, err = msg.Reply(
+		context,
 		bot.Client,
 		&disgord.CreateMessageParams{
 			Embed: MakeEmbed(

@@ -31,6 +31,7 @@ var help = lib.Command{
 		}
 
 		_ = bot.SendEmbed(
+			context.Ctx,
 			&fullMessage,
 			context.Message,
 		)

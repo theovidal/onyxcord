@@ -1,7 +1,6 @@
 package commands
 
 import (
-	"log"
 	"math/rand"
 
 	"github.com/BecauseOfProg/boite-a-bois/lib"
@@ -18,14 +17,14 @@ var pingSentences = []string{
 }
 
 var ping = lib.Command{
-	Description: "Get the weather",
-	Usage:       "weather <localisation>",
+	Description: "Tester si le robot répond correctement",
+	Usage:       "ping",
 	Category:    "utilities",
-	Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) {
+	Show:        false,
+	Listen:      []string{"public", "private"},
+	Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) (err error) {
 		sentenceNumber := rand.Intn(len(pingSentences))
-		_, err := context.Message.Reply(*bot.Session, pingSentences[sentenceNumber])
-		if err != nil {
-			log.Fatalf("Error while sending a message : %v", err)
-		}
+		_, err = context.Message.Reply(context.Ctx, *bot.Session, pingSentences[sentenceNumber])
+		return
 	},
 }

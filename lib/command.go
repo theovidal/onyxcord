@@ -39,7 +39,7 @@ type Command struct {
 
 // Prettify returns a string with information about a command, ready to be printed to the user
 func (command Command) Prettify(name string, prefix string) (prettified string) {
-	prettified = fmt.Sprintf("● %s%s : %s\nUtilisation : `%s`", prefix, name, command.Description, command.Usage)
+	prettified = fmt.Sprintf("● **%s%s** : %s\nUtilisation : `%s`", prefix, name, command.Description, command.Usage)
 	if command.Alias != "" {
 		prettified += fmt.Sprintf("\nAlias : `%s`", command.Alias)
 	}
