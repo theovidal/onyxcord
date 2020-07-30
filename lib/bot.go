@@ -66,27 +66,27 @@ func LoadBot(commands map[string]*Command) Bot {
 func (bot *Bot) OnCommand(session disgord.Session, context *disgord.MessageCreate) {
 	bot.Session = &session
 	msg := context.Message
-	composition := strings.Split(msg.Content, " ")
-	if commandName := composition[0]; strings.HasPrefix(commandName, bot.Config.Bot.Prefix) {
-		commandName = strings.TrimPrefix(commandName, bot.Config.Bot.Prefix)
-		command, exists := bot.Commands[commandName]
-		if exists {
-			bot.ExecuteCommand(command, composition[1:], context)
-		} else {
-			_, _ = context.Message.Reply(
-				context.Ctx,
-				bot.Client,
-				&disgord.CreateMessageParams{
-					Embed: MakeEmbed(bot.Config, &disgord.Embed{
-						Title: fmt.Sprintf("La commande %s est inconnue", commandName),
-						Description: fmt.Sprintf(
-							"\nExécutez `%shelp` pour obtenir la liste des commandes disponibles.",
-							bot.Config.Bot.Prefix),
-						Color: bot.Config.Bot.Color,
-					}),
-				},
-			)
-		}
+	parts := strings.Split(msg.Content, " ")
+	commandName := strings.TrimPrefix(parts[0], bot.Config.Bot.Prefix)
+	command, exists := bot.Commands[commandName]
+	if exists {
+		argumentsPart := strings.Join(parts[1:], " ")
+		arguments := strings.Split(argumentsPart, ",")
+		bot.ExecuteCommand(command, arguments, context)
+	} else {
+		_, _ = context.Message.Reply(
+			context.Ctx,
+			bot.Client,
+			&disgord.CreateMessageParams{
+				Embed: MakeEmbed(bot.Config, &disgord.Embed{
+					Title: fmt.Sprintf("La commande %s est inconnue", commandName),
+					Description: fmt.Sprintf(
+						"\nExécutez `%shelp` pour obtenir la liste des commandes disponibles.",
+						bot.Config.Bot.Prefix),
+					Color: bot.Config.Bot.Color,
+				}),
+			},
+		)
 	}
 }
 
@@ -104,10 +104,12 @@ func (bot *Bot) ExecuteCommand(command *Command, arguments []string, context *di
 				&disgord.CreateMessageParams{
 					Embed: MakeEmbed(bot.Config, &disgord.Embed{
 						Title: ":x: Erreur dans l'exécution de la commande",
-						Description: fmt.Sprintf("**%v**\n\n"+
-							"N'hésitez-pas à contacter %s (%s) si vous pensez que c'est un bogue !",
+						Description: fmt.Sprintf(
+							"**%v**\n\n"+
+								"N'hésitez-pas à contacter %s (%s) si vous pensez que c'est un bogue !",
 							err, bot.Config.Dev.Maintainer.Name,
-							bot.Config.Dev.Maintainer.Link),
+							bot.Config.Dev.Maintainer.Link,
+						),
 						Color: 12000284,
 					}),
 				},
