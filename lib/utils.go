@@ -11,7 +11,7 @@ func MakeEmbed(config *Config, base *disgord.Embed) *disgord.Embed {
 	return &disgord.Embed{
 		Title:       base.Title,
 		Description: base.Description,
-		Timestamp:   disgord.Time{Time: time.Now()},
+		Timestamp:   disgord.Time{Time: time.Now().UTC()},
 		Color:       config.Bot.Color,
 		Footer: &disgord.EmbedFooter{
 			Text:    fmt.Sprintf("%s v%s", config.Bot.Name, config.Dev.Version),
