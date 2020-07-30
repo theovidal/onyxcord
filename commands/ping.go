@@ -10,10 +10,14 @@ import (
 var pingSentences = []string{
 	"Pong ! :smirk:",
 	"BONJOUR",
-	"gildas il sait trop bien grimper putain, exybore est jaloux de ouf",
+	"gildas il sait trop bien grimper putain, théo est jaloux de ouf",
 	"t'façon tout le monde sait que Java ça pue",
-	"https://github.com/exybore :wink:",
+	"https://github.com/theovidal Meilleur profil GitHub du monde :wink:",
 	`On dit "iPhone dix" et non "iPhone ixe" :rage:`,
+	"*prend la voix de kernoeb* Heyyy",
+	"jaaj",
+	"Mais j'ai l'impression de rendre l'aléatoire encore plus aléatoire",
+	"OK boomer",
 }
 
 var ping = lib.Command{

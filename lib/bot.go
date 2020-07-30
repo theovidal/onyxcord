@@ -114,8 +114,6 @@ func (bot *Bot) ExecuteCommand(command *Command, arguments []string, context *di
 					}),
 				},
 			)
-			log.Printf("Command %s (executed by %s#%d) failed to execute : %v",
-				command.Usage, context.Message.Author.Username, context.Message.Author.Discriminator, err)
 		}
 	} else {
 		log.Panicf("Unknown error while parsing a command")

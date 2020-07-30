@@ -21,12 +21,20 @@ var help = lib.Command{
 			}
 		}
 
-		var fullMessage disgord.Embed
+		fullMessage := disgord.Embed{
+			Title: ":fast_forward: Commandes du robot",
+			Description: fmt.Sprintf(
+				"Voici une liste des commandes disponibles sur %s."+
+					"Elles s'exécutent dans un salon textuel avec, ou non, des arguments séparés par une virgule.",
+				bot.Config.Bot.Name,
+			),
+		}
 		for categoryName, commands := range commandsList {
 			category := bot.Config.Categories[categoryName]
 			fullMessage.Fields = append(fullMessage.Fields, &disgord.EmbedField{
-				Name:  fmt.Sprintf(":%s: %s", category.Emoji, category.Name),
-				Value: commands,
+				Name:   fmt.Sprintf(":%s: %s", category.Emoji, category.Name),
+				Value:  commands,
+				Inline: true,
 			})
 		}
 
