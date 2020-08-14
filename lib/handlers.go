@@ -10,25 +10,23 @@ import (
 
 type ReactionRole struct {
 	ID      primitive.ObjectID `bson:"_id,omitempty"`
-	Channel int                `bson:"channel"`
-	Message int                `bson:"message"`
-	Roles   map[string]int     `bson:"roles"`
+	Channel string             `bson:"channel"`
+	Message string             `bson:"message"`
+	Roles   map[string]string  `bson:"roles"`
+}
+
+func remove(s []disgord.Snowflake, i int) []disgord.Snowflake {
+	s[i] = s[len(s)-1]
+	return s[:len(s)-1]
 }
 
 func (bot *Bot) OnReactionAdd(_ disgord.Session, context *disgord.MessageReactionAdd) {
-	found, reaction := FindReactionRole(bot, &context.ChannelID, &context.MessageID)
+	found, role, channel, user := FindReactionRole(bot, &context.ChannelID, &context.MessageID, context.UserID, context.PartialEmoji.Name)
 	if !found {
 		return
 	}
 
-	channel, _ := bot.Client.GetChannel(context.Ctx, context.ChannelID)
-	user, _ := bot.Client.GetMember(context.Ctx, channel.GuildID, context.UserID)
-
-	role := reaction.Roles[context.PartialEmoji.Name]
-	println(role)
-	println(743574037992702032)
-	println(role == 743574037992702032)
-	userRoles := append(user.Roles, disgord.NewSnowflake(uint64(role)))
+	userRoles := append(user.Roles, role)
 
 	err := bot.Client.UpdateGuildMember(context.Ctx, channel.GuildID, context.UserID).SetRoles(userRoles).Execute()
 	if err != nil {
@@ -36,21 +34,45 @@ func (bot *Bot) OnReactionAdd(_ disgord.Session, context *disgord.MessageReactio
 	}
 }
 
-func (bot *Bot) OnReactionRemove(_ disgord.Session, _ *disgord.MessageReactionRemove) {
+func (bot *Bot) OnReactionRemove(_ disgord.Session, context *disgord.MessageReactionRemove) {
+	found, role, channel, user := FindReactionRole(bot, &context.ChannelID, &context.MessageID, context.UserID, context.PartialEmoji.Name)
+	if !found {
+		return
+	}
 
+	var indexToRemove int
+	for index, roleID := range user.Roles {
+		if roleID == role {
+			indexToRemove = index
+			break
+		}
+	}
+
+	userRoles := remove(user.Roles, indexToRemove)
+
+	err := bot.Client.UpdateGuildMember(context.Ctx, channel.GuildID, context.UserID).SetRoles(userRoles).Execute()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
-func FindReactionRole(bot *Bot, _ *disgord.Snowflake, _ *disgord.Snowflake) (found bool, data ReactionRole) {
+func FindReactionRole(bot *Bot, channelID *disgord.Snowflake, messageID *disgord.Snowflake, userID disgord.Snowflake, emoji string) (found bool, role disgord.Snowflake, channel *disgord.Channel, user *disgord.Member) {
 	collection := bot.Db.Database(bot.Config.Database.Database).Collection("reactionRoles")
 
-	filter := bson.M{}
+	filter := bson.M{
+		"channel": channelID.String(),
+		"message": messageID.String(),
+	}
 
+	var data ReactionRole
 	err := collection.FindOne(context.TODO(), filter).Decode(&data)
-
-	fmt.Println(data)
-
 	if err == nil {
 		found = true
 	}
+
+	channel, _ = bot.Client.GetChannel(context.Background(), *channelID)
+	user, _ = bot.Client.GetMember(context.Background(), channel.GuildID, userID)
+	role = disgord.ParseSnowflakeString(data.Roles[emoji])
+
 	return
 }
