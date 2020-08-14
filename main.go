@@ -59,6 +59,14 @@ func main() {
 		bot.OnCommand(session, context)
 	})
 
+	// Handlers
+	bot.Client.On(disgord.EvtMessageReactionAdd, func(session disgord.Session, context *disgord.MessageReactionAdd) {
+		bot.OnReactionAdd(session, context)
+	})
+	bot.Client.On(disgord.EvtMessageReactionRemove, func(session disgord.Session, context *disgord.MessageReactionRemove) {
+		bot.OnReactionRemove(session, context)
+	})
+
 	// Print to the console when the bot is ready
 	bot.Client.Ready(func() {
 		log.Printf("Logged in as %s#%d\n", bot.User.Username, bot.User.Discriminator)
