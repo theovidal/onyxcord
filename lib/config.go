@@ -58,6 +58,8 @@ type Config struct {
 		Password string
 		// Database to connect from (e.g : boite-a-bois)
 		AuthSource string `yaml:"auth_source"`
+		// Database to use (e.g : boite-a-bois)
+		Database string
 	}
 }
 

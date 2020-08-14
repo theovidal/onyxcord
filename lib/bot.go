@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
 
 	"github.com/andersfylling/disgord"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Bot represents the Discord bot with its assets
@@ -22,16 +22,12 @@ type Bot struct {
 	Session *disgord.Session
 	// The profile of the bot
 	User *disgord.User
+	// The MongoDB attached to the bot
+	Db *mongo.Client
 }
 
 // LoadBot creates a new instance of the Discord Bot
-func LoadBot(commands map[string]*Command) Bot {
-	// Loading the configuration
-	config, err := GetConfig(filepath.Base("./config.yml"))
-	if err != nil {
-		log.Panicf("Error while getting the configuration : %v", err)
-	}
-
+func LoadBot(config *Config, commands map[string]*Command, database *mongo.Client) Bot {
 	// Creating the bot profile
 	client := disgord.New(disgord.Config{
 		BotToken: config.Bot.Token,
@@ -57,8 +53,9 @@ func LoadBot(commands map[string]*Command) Bot {
 	return Bot{
 		Client:   client,
 		Commands: commands,
-		Config:   &config,
+		Config:   config,
 		User:     user,
+		Db:       database,
 	}
 }
 
@@ -92,31 +89,24 @@ func (bot *Bot) OnCommand(session disgord.Session, context *disgord.MessageCreat
 
 // ExecuteCommand executes the command parsed in the OnCommand function
 func (bot *Bot) ExecuteCommand(command *Command, arguments []string, context *disgord.MessageCreate) {
-	commandFunction, success :=
-		command.Execute.(func(arguments []string, bot Bot, context *disgord.MessageCreate) (err error))
-
-	if success {
-		err := commandFunction(arguments, *bot, context)
-		if err != nil {
-			_, _ = context.Message.Reply(
-				context.Ctx,
-				bot.Client,
-				&disgord.CreateMessageParams{
-					Embed: MakeEmbed(bot.Config, &disgord.Embed{
-						Title: ":x: Erreur dans l'exécution de la commande",
-						Description: fmt.Sprintf(
-							"**%v**\n\n"+
-								"N'hésitez-pas à contacter %s (%s) si vous pensez que c'est un bogue !",
-							err, bot.Config.Dev.Maintainer.Name,
-							bot.Config.Dev.Maintainer.Link,
-						),
-						Color: 12000284,
-					}),
-				},
-			)
-		}
-	} else {
-		log.Panicf("Unknown error while parsing a command")
+	err := command.Execute(arguments, *bot, context)
+	if err != nil {
+		_, _ = context.Message.Reply(
+			context.Ctx,
+			bot.Client,
+			&disgord.CreateMessageParams{
+				Embed: MakeEmbed(bot.Config, &disgord.Embed{
+					Title: ":x: Erreur dans l'exécution de la commande",
+					Description: fmt.Sprintf(
+						"**%v**\n\n"+
+							"N'hésitez-pas à contacter %s (%s) si vous pensez que c'est un bogue !",
+						err, bot.Config.Dev.Maintainer.Name,
+						bot.Config.Dev.Maintainer.Link,
+					),
+					Color: 12000284,
+				}),
+			},
+		)
 	}
 }
 
