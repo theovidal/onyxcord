@@ -117,7 +117,7 @@ func (bot *Bot) ExecuteCommand(command *Command, arguments []string, context *di
 }
 
 // SendEmbed is a helper that sends an embed in the current channel
-func (bot Bot) SendEmbed(context context.Context, embed *disgord.Embed, msg *disgord.Message) (err error) {
+func (bot *Bot) SendEmbed(context context.Context, embed *disgord.Embed, msg *disgord.Message) (err error) {
 	_, err = msg.Reply(
 		context,
 		bot.Client,

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/BecauseOfProg/boite-a-bois/lib"
 	"github.com/andersfylling/disgord"
+	"github.com/theovidal/onyxcord/lib"
 	"go.mongodb.org/mongo-driver/bson"
 )
 

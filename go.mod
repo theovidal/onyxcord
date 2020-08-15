@@ -1,4 +1,4 @@
-module github.com/BecauseOfProg/boite-a-bois
+module github.com/theovidal/onyxcord
 
 go 1.13
 

@@ -3,8 +3,8 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"github.com/BecauseOfProg/boite-a-bois/lib"
 	"github.com/andersfylling/disgord"
+	"github.com/theovidal/onyxcord/lib"
 	"strings"
 )
 

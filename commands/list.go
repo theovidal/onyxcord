@@ -1,6 +1,6 @@
 package commands
 
-import "github.com/BecauseOfProg/boite-a-bois/lib"
+import "github.com/theovidal/onyxcord/lib"
 
 var List = map[string]*lib.Command{
 	"help":    &help,

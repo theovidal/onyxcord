@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/BecauseOfProg/boite-a-bois/commands"
-	"github.com/BecauseOfProg/boite-a-bois/handlers"
-	"github.com/BecauseOfProg/boite-a-bois/lib"
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
+	"github.com/theovidal/onyxcord/commands"
+	"github.com/theovidal/onyxcord/handlers"
+	"github.com/theovidal/onyxcord/lib"
 
 	_ "go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"

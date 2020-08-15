@@ -50,7 +50,7 @@ package commands
 
 import (
   "github.com/andersfylling/disgord"
-  "github.com/BecauseOfProg/boite-a-bois/lib"
+  "github.com/theovidal/onyxcord/lib"
 )
 
 var weather = lib.Command{
