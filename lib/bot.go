@@ -23,11 +23,11 @@ type Bot struct {
 	// The profile of the bot
 	User *disgord.User
 	// The MongoDB attached to the bot
-	Db *mongo.Client
+	Db *Database
 }
 
 // LoadBot creates a new instance of the Discord Bot
-func LoadBot(config *Config, commands map[string]*Command, database *mongo.Client) Bot {
+func LoadBot(config *Config, commands map[string]*Command, mongoClient *mongo.Client) Bot {
 	// Creating the bot profile
 	client := disgord.New(disgord.Config{
 		BotToken: config.Bot.Token,
@@ -50,12 +50,18 @@ func LoadBot(config *Config, commands map[string]*Command, database *mongo.Clien
 		log.Panicf("Error while creating the user profile : %v", err)
 	}
 
+	// Loading database collections
+	database := Database{
+		Client:        mongoClient,
+		ReactionRoles: mongoClient.Database(config.Database.Database).Collection("reactionRoles"),
+	}
+
 	return Bot{
 		Client:   client,
 		Commands: commands,
 		Config:   config,
 		User:     user,
-		Db:       database,
+		Db:       &database,
 	}
 }
 

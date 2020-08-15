@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/BecauseOfProg/boite-a-bois/commands"
+	"github.com/BecauseOfProg/boite-a-bois/handlers"
 	"github.com/BecauseOfProg/boite-a-bois/lib"
 	"github.com/andersfylling/disgord"
 	"github.com/andersfylling/disgord/std"
@@ -59,12 +60,12 @@ func main() {
 		bot.OnCommand(session, context)
 	})
 
-	// Handlers
-	bot.Client.On(disgord.EvtMessageReactionAdd, func(session disgord.Session, context *disgord.MessageReactionAdd) {
-		bot.OnReactionAdd(session, context)
+	// Other handlers for various features
+	bot.Client.On(disgord.EvtMessageReactionAdd, func(_ disgord.Session, context *disgord.MessageReactionAdd) {
+		handlers.ReactionRoleAdd(&bot, context)
 	})
-	bot.Client.On(disgord.EvtMessageReactionRemove, func(session disgord.Session, context *disgord.MessageReactionRemove) {
-		bot.OnReactionRemove(session, context)
+	bot.Client.On(disgord.EvtMessageReactionRemove, func(_ disgord.Session, context *disgord.MessageReactionRemove) {
+		handlers.ReactionRoleRemove(&bot, context)
 	})
 
 	// Print to the console when the bot is ready
