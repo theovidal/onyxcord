@@ -4,6 +4,7 @@ import (
 	"math/rand"
 
 	"github.com/andersfylling/disgord"
+
 	"github.com/theovidal/onyxcord/lib"
 )
 
@@ -25,7 +26,7 @@ var ping = lib.Command{
 	Usage:       "ping",
 	Category:    "utilities",
 	Show:        false,
-	Listen:      []string{"public", "private"},
+	ListenInDM:  true,
 	Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) (err error) {
 		sentenceNumber := rand.Intn(len(pingSentences))
 		_, err = context.Message.Reply(context.Ctx, *bot.Session, pingSentences[sentenceNumber])

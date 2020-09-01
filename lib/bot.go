@@ -72,14 +72,8 @@ func (bot *Bot) OnCommand(session disgord.Session, context *disgord.MessageCreat
 	parts := strings.Split(msg.Content, " ")
 	commandName := strings.TrimPrefix(parts[0], bot.Config.Bot.Prefix)
 	command, exists := bot.Commands[commandName]
-	if exists {
-		argumentsPart := strings.Join(parts[1:], " ")
-		arguments := strings.Split(argumentsPart, ",")
-		bot.ExecuteCommand(command, arguments, context)
-	} else {
-		_, _ = context.Message.Reply(
-			context.Ctx,
-			bot.Client,
+	if !exists {
+		_, _ = context.Message.Reply(context.Ctx, bot.Client,
 			&disgord.CreateMessageParams{
 				Embed: MakeEmbed(bot.Config, &disgord.Embed{
 					Title: fmt.Sprintf("La commande %s est inconnue", commandName),
@@ -90,6 +84,13 @@ func (bot *Bot) OnCommand(session disgord.Session, context *disgord.MessageCreat
 				}),
 			},
 		)
+		return
+	}
+
+	if command.ListenInDM && msg.IsDirectMessage() || command.ListenInPublic && !msg.IsDirectMessage() {
+		argumentsPart := strings.Join(parts[1:], " ")
+		arguments := strings.Split(argumentsPart, ",")
+		bot.ExecuteCommand(command, arguments, context)
 	}
 }
 
@@ -97,9 +98,7 @@ func (bot *Bot) OnCommand(session disgord.Session, context *disgord.MessageCreat
 func (bot *Bot) ExecuteCommand(command *Command, arguments []string, context *disgord.MessageCreate) {
 	err := command.Execute(arguments, *bot, context)
 	if err != nil {
-		_, _ = context.Message.Reply(
-			context.Ctx,
-			bot.Client,
+		_, _ = context.Message.Reply(context.Ctx, bot.Client,
 			&disgord.CreateMessageParams{
 				Embed: MakeEmbed(bot.Config, &disgord.Embed{
 					Title: ":x: Erreur dans l'exécution de la commande",

@@ -2,15 +2,9 @@ package lib
 
 import (
 	"fmt"
-	"github.com/andersfylling/disgord"
-	"strings"
-)
 
-// Options for command listening
-var ListenTypes = map[string]string{
-	"public":  "salon public",
-	"private": "message privé",
-}
+	"github.com/andersfylling/disgord"
+)
 
 // Command represents a command that can be executed by a user
 type Command struct {
@@ -24,9 +18,10 @@ type Command struct {
 	Alias string
 	// Choose if the command is shown in the help or not
 	Show bool
-	// Listen for messages from public or private channels.
-	// So, the two possible keys inside this array are : private, public
-	Listen []string
+	// Whether the bot should listen to the command in public channels
+	ListenInPublic bool
+	// Whether the bot should listen to the command in direct messages
+	ListenInDM bool
 	// Lock the command only for certain channels
 	Channels []int
 	// Lock the command only for certain user roles
@@ -43,10 +38,13 @@ func (command Command) Prettify(name string, prefix string) (prettified string) 
 	if command.Alias != "" {
 		prettified += fmt.Sprintf("\nAlias : `%s`", command.Alias)
 	}
-	prettified += fmt.Sprintf("\nS'exécute en")
-	for _, listenType := range command.Listen {
-		prettified += fmt.Sprintf(" %s et", ListenTypes[listenType])
+	if !(command.ListenInPublic && command.ListenInDM) {
+		prettified += "\nS'exécute uniquement dans "
+		if command.ListenInDM {
+			prettified += "les messages privés"
+		} else {
+			prettified += "un salon du serveur"
+		}
 	}
-	prettified = strings.TrimSuffix(prettified, " et")
 	return
 }

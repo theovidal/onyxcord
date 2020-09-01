@@ -54,24 +54,56 @@ func ReactionRoleRemove(bot *lib.Bot, context *disgord.MessageReactionRemove) {
 	SetRoles(bot, channel.GuildID, context.UserID, userRoles)
 }
 
-func FindReactionRole(bot *lib.Bot, channelID, messageID, userID disgord.Snowflake, emoji string) (found bool, role disgord.Snowflake, channel *disgord.Channel, userRoles []disgord.Snowflake) {
-	filter := bson.M{
+func ReactionRoleHandlerRemove(bot *lib.Bot, context *disgord.MessageDelete) {
+	filter := GetFilter(context.ChannelID, context.MessageID)
+	result, _ := bot.Db.ReactionRoles.DeleteOne(context.Ctx, filter)
+	if result.DeletedCount == 0 {
+		return
+	}
+
+	_, _ = bot.Client.SendMsg(
+		context.Ctx,
+		context.ChannelID,
+		&disgord.CreateMessageParams{
+			Embed: lib.MakeEmbed(
+				bot.Config,
+				&disgord.Embed{
+					Title:       ":white_check_mark: Le support de réaction-rôle a été supprimé.",
+					Description: "Si vous pensez que c'est une erreur, n'hésitez-pas à nous le signaler!",
+				},
+			),
+		},
+	)
+}
+
+func GetFilter(channelID, messageID disgord.Snowflake) bson.M {
+	return bson.M{
 		"channel": channelID.String(),
 		"message": messageID.String(),
 	}
+}
 
-	var data ReactionRole
+func FindReactionRoleHandler(bot *lib.Bot, channelID, messageID disgord.Snowflake) (found bool, channel *disgord.Channel, data ReactionRole) {
+	filter := GetFilter(channelID, messageID)
 	err := bot.Db.ReactionRoles.FindOne(context.TODO(), filter).Decode(&data)
 	if err != nil {
 		return
 	}
 
 	found = true
-	role = disgord.ParseSnowflakeString(data.Roles[emoji])
 	channel, _ = bot.Client.GetChannel(context.Background(), channelID)
+	return
+}
+
+func FindReactionRole(bot *lib.Bot, channelID, messageID, userID disgord.Snowflake, emoji string) (found bool, role disgord.Snowflake, channel *disgord.Channel, userRoles []disgord.Snowflake) {
+	found, channel, data := FindReactionRoleHandler(bot, channelID, messageID)
+	if !found {
+		return
+	}
+
+	role = disgord.ParseSnowflakeString(data.Roles[emoji])
 	user, _ := bot.Client.GetMember(context.Background(), channel.GuildID, userID)
 	userRoles = user.Roles
-
 	return
 }
 

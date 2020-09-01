@@ -67,6 +67,9 @@ func main() {
 	bot.Client.On(disgord.EvtMessageReactionRemove, func(_ disgord.Session, context *disgord.MessageReactionRemove) {
 		handlers.ReactionRoleRemove(&bot, context)
 	})
+	bot.Client.On(disgord.EvtMessageDelete, func(_ disgord.Session, context *disgord.MessageDelete) {
+		handlers.ReactionRoleHandlerRemove(&bot, context)
+	})
 
 	// Print to the console when the bot is ready
 	bot.Client.Ready(func() {

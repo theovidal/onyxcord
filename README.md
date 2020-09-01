@@ -57,7 +57,7 @@ var weather = lib.Command{
   Description: "Get the weather",
   Usage:       "weather <localisation>",
   Category:    "utilities",
-  Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) {
+  Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) (err error) {
     // action to execute when the command is triggered
   },
 }
@@ -85,10 +85,8 @@ The schemas are in the YML format. All is documented [on the mongocore gem page]
 
 ## 📜 Credits
 
-- Library : [DiscordRB](https://github.com/meew0/discordrb)
-- Developers :
-  - [Whaxion](https://github.com/whaxion) : old Ruby bot
-  - [Exybore](https://github.com/exybore) : maintainor, actual developer
+- Library : [Disgord](https://github.com/andersfylling/disgord)
+- Maintainer : [Théo Vidal](https://github.com/theovidal)
 
 ## 🔐 License
 

@@ -2,15 +2,18 @@ package commands
 
 import (
 	"fmt"
+
 	"github.com/andersfylling/disgord"
+
 	"github.com/theovidal/onyxcord/lib"
 )
 
 var help = lib.Command{
-	Description: "Obtenir de l'aide sur les commandes du robot",
-	Usage:       "help",
-	Category:    "utilities",
-	Listen:      []string{"public", "private"},
+	Description:    "Obtenir de l'aide sur les commandes du robot",
+	Usage:          "help",
+	Category:       "utilities",
+	ListenInDM:     true,
+	ListenInPublic: true,
 	Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) (err error) {
 		commandsList := make(map[string]string)
 		for name, command := range bot.Commands {

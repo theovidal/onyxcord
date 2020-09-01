@@ -3,9 +3,11 @@ package commands
 import (
 	"errors"
 	"fmt"
-	"github.com/andersfylling/disgord"
-	"github.com/theovidal/onyxcord/lib"
 	"strings"
+
+	"github.com/andersfylling/disgord"
+
+	"github.com/theovidal/onyxcord/lib"
 )
 
 var pollChoices = map[string][]string{
@@ -19,10 +21,10 @@ var pollChoices = map[string][]string{
 }
 
 var poll = lib.Command{
-	Description: "Organiser un vote",
-	Usage:       "poll <template>,<question>,[choix...]",
-	Category:    "utilities",
-	Listen:      []string{"public"},
+	Description:    "Organiser un vote",
+	Usage:          "poll <template>,<question>,[choix...]",
+	Category:       "utilities",
+	ListenInPublic: true,
 	Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) (err error) {
 		err = bot.Client.DeleteMessage(context.Ctx, context.Message.ChannelID, context.Message.ID)
 		if err != nil {
@@ -37,14 +39,13 @@ var poll = lib.Command{
 		if arguments[1] == "" {
 			template = pollChoices["letters"]
 		} else {
-			_, ok := pollChoices[arguments[1]]
+			var ok bool
+			template, ok = pollChoices[arguments[1]]
 			if !ok {
 				return errors.New(
 					"Le modèle de choix est invalide. " +
 						"Les choix possibles sont : `shapes`, `numbers`, `letters`, `food`, `faces`, `transportation`",
 				)
-			} else {
-				template = pollChoices[arguments[1]]
 			}
 		}
 
@@ -77,7 +78,7 @@ var poll = lib.Command{
 			return
 		}
 
-		for index, _ := range arguments[2:] {
+		for index := range arguments[2:] {
 			err = sentMessage.React(
 				context.Ctx,
 				*bot.Session,
