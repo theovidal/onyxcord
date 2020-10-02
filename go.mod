@@ -3,7 +3,7 @@ module github.com/theovidal/onyxcord
 go 1.13
 
 require (
-	github.com/andersfylling/disgord v0.18.0
+	github.com/bwmarrin/discordgo v0.22.0
 	github.com/exybore/goweather v0.1.1
 	go.mongodb.org/mongo-driver v1.4.0
 	go.uber.org/multierr v1.4.0 // indirect
