@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/theovidal/onyxcord/lib"
-
-	"github.com/andersfylling/disgord"
+	"github.com/bwmarrin/discordgo"
 	"github.com/exybore/goweather"
+
+	"github.com/theovidal/onyxcord/lib"
 )
 
 var weather = lib.Command{
@@ -17,7 +17,7 @@ var weather = lib.Command{
 	Category:       "weather",
 	ListenInPublic: true,
 	ListenInDM:     true,
-	Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) (err error) {
+	Execute: func(arguments []string, bot lib.Bot, message *discordgo.MessageCreate) (err error) {
 		weatherAPI, err := goweather.NewAPI(bot.Config.Assets["weather_api_key"], "fr", "metric")
 		if err != nil {
 			return
@@ -29,9 +29,9 @@ var weather = lib.Command{
 			return errors.New(":satellite_orbital: Cette localisation est inconnue")
 		}
 
-		err = bot.SendEmbed(
-			context.Ctx,
-			&disgord.Embed{
+		_, err = bot.Client.ChannelMessageSendEmbed(
+			message.ChannelID,
+			&discordgo.MessageEmbed{
 				Title: fmt.Sprintf("%s :flag_%s:", weather.City.Name, strings.ToLower(weather.City.Country)),
 				Description: fmt.Sprintf("**%s**\n\n"+
 					":thermometer: Température : %.1f°C\n"+
@@ -41,11 +41,10 @@ var weather = lib.Command{
 					strings.Title(weather.Conditions.Description), weather.Conditions.Temperature,
 					weather.Conditions.Humidity, weather.Conditions.Clouds,
 					weather.Conditions.WindSpeed*3.6),
-				Thumbnail: &disgord.EmbedThumbnail{
+				Thumbnail: &discordgo.MessageEmbedThumbnail{
 					URL: weather.Conditions.IconURL,
 				},
 			},
-			context.Message,
 		)
 		return
 	},

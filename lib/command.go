@@ -2,8 +2,7 @@ package lib
 
 import (
 	"fmt"
-
-	"github.com/andersfylling/disgord"
+	"github.com/bwmarrin/discordgo"
 )
 
 // Command represents a command that can be executed by a user
@@ -29,7 +28,7 @@ type Command struct {
 	// Lock the command only for certain members on the server
 	Members []int
 	// Action to execute if the command is triggered
-	Execute func(arguments []string, bot Bot, context *disgord.MessageCreate) (err error)
+	Execute func(arguments []string, bot Bot, message *discordgo.MessageCreate) (err error)
 }
 
 // Prettify returns a string with information about a command, ready to be printed to the user

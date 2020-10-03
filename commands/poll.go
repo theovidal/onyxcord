@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/andersfylling/disgord"
+	"github.com/bwmarrin/discordgo"
 
 	"github.com/theovidal/onyxcord/lib"
 )
@@ -25,12 +25,15 @@ var poll = lib.Command{
 	Usage:          "poll <template>,<question>,[choix...]",
 	Category:       "utilities",
 	ListenInPublic: true,
-	Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) (err error) {
-		err = bot.Client.DeleteMessage(context.Ctx, context.Message.ChannelID, context.Message.ID)
+	Execute: func(arguments []string, bot lib.Bot, message *discordgo.MessageCreate) (err error) {
+		err = bot.Client.ChannelMessageDelete(message.ChannelID, message.ID)
 		if err != nil {
 			return
 		}
 
+		if len(arguments) < 3 {
+			return errors.New("Il n'y a pas assez d'arguments")
+		}
 		if len(arguments[2:]) > 20 || len(arguments[2:]) == 0 {
 			return errors.New("Le nombre de réponses doit être compris entre 1 et 22")
 		}
@@ -54,36 +57,30 @@ var poll = lib.Command{
 			choices += fmt.Sprintf("%s %s\n", template[index], value)
 		}
 
-		userAvatar, _ := context.Message.Author.AvatarURL(64, false)
-		message := disgord.Embed{
+		userAvatar := message.Author.AvatarURL("64")
+		poll := discordgo.MessageEmbed{
 			Title:       fmt.Sprintf("**📊 Sondage :** %s", arguments[0]),
 			Description: choices,
-			Author: &disgord.EmbedAuthor{
-				Name:    context.Message.Author.Username,
+			Author: &discordgo.MessageEmbedAuthor{
+				Name:    message.Author.Username,
 				IconURL: userAvatar,
 			},
 		}
 
-		sentMessage, err := bot.Client.SendMsg(
-			context.Ctx,
-			context.Message.ChannelID,
-			&disgord.CreateMessageParams{
-				Embed: lib.MakeEmbed(
-					bot.Config,
-					&message,
-				),
-			},
+		sentPoll, err := bot.Client.ChannelMessageSendEmbed(
+			message.ChannelID,
+			lib.MakeEmbed(
+				bot.Config,
+				&poll,
+			),
 		)
 		if err != nil {
+			panic(err)
 			return
 		}
 
 		for index := range arguments[2:] {
-			err = sentMessage.React(
-				context.Ctx,
-				*bot.Session,
-				template[index],
-			)
+			err = bot.Client.MessageReactionAdd(message.ChannelID, sentPoll.ID, template[index])
 			if err != nil {
 				return
 			}

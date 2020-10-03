@@ -2,8 +2,9 @@ package commands
 
 import (
 	"fmt"
-	"github.com/andersfylling/disgord"
 	"os"
+
+	"github.com/bwmarrin/discordgo"
 
 	"github.com/theovidal/onyxcord/lib"
 )
@@ -11,11 +12,11 @@ import (
 var archive = lib.Command{
 	Description:    "Archiver les messages du salon",
 	Usage:          "archive",
-	Category:       "utils",
+	Category:       "utilities",
 	Show:           false,
 	ListenInPublic: true,
-	Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) (err error) {
-		context.Message.Reply(context.Ctx, bot.Client, "Ouverture du fichier")
+	Execute: func(arguments []string, bot lib.Bot, message *discordgo.MessageCreate) (err error) {
+		bot.Client.ChannelMessageSend(message.ChannelID, "Ouverture du fichier")
 		var file *os.File
 		file, err = os.OpenFile("tmp/archive.txt", os.O_RDWR|os.O_CREATE, os.ModePerm)
 		if err != nil {
@@ -23,13 +24,10 @@ var archive = lib.Command{
 		}
 
 		var channel string
-		var before disgord.Snowflake
+		var before string
 		for {
-			context.Message.Reply(context.Ctx, bot.Client, "Récupération de messages...")
-			messages, err := bot.Client.GetMessages(context.Ctx, context.Message.ChannelID, &disgord.GetMessagesParams{
-				Limit:  100,
-				Before: before,
-			})
+			bot.Client.ChannelMessageSend(message.ChannelID, "Récupération de messages...")
+			messages, err := bot.Client.ChannelMessages(message.ChannelID, 100, before, "", "")
 			fmt.Println(messages)
 			if err != nil {
 				return err
@@ -39,14 +37,15 @@ var archive = lib.Command{
 			}
 
 			for _, message := range messages {
+				date, _ := message.Timestamp.Parse()
 				channel = fmt.Sprintf(
 					"%s%d/%d/%d %d:%d %s : %s\n",
 					channel,
-					message.Timestamp.Day(),
-					message.Timestamp.Month(),
-					message.Timestamp.Year(),
-					message.Timestamp.Hour(),
-					message.Timestamp.Minute(),
+					date.Day(),
+					date.Month(),
+					date.Year(),
+					date.Hour(),
+					date.Minute(),
 					message.Author.Username,
 					message.Content,
 				)
@@ -54,9 +53,9 @@ var archive = lib.Command{
 			}
 		}
 
-		context.Message.Reply(context.Ctx, bot.Client, "Écriture du fichier")
+		bot.Client.ChannelMessageSend(message.ChannelID, "Écriture du fichier")
 		_, err = file.Write([]byte(channel))
-		context.Message.Reply(context.Ctx, bot.Client, "Done!")
+		bot.Client.ChannelMessageSend(message.ChannelID, "Done!")
 		return
 	},
 }

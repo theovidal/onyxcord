@@ -3,7 +3,7 @@ package commands
 import (
 	"math/rand"
 
-	"github.com/andersfylling/disgord"
+	"github.com/bwmarrin/discordgo"
 
 	"github.com/theovidal/onyxcord/lib"
 )
@@ -27,9 +27,9 @@ var ping = lib.Command{
 	Category:    "utilities",
 	Show:        false,
 	ListenInDM:  true,
-	Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) (err error) {
+	Execute: func(arguments []string, bot lib.Bot, message *discordgo.MessageCreate) (err error) {
 		sentenceNumber := rand.Intn(len(pingSentences))
-		_, err = context.Message.Reply(context.Ctx, *bot.Session, pingSentences[sentenceNumber])
+		_, err = bot.Client.ChannelMessageSend(message.ChannelID, pingSentences[sentenceNumber])
 		return
 	},
 }

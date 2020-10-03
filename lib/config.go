@@ -27,7 +27,7 @@ type Config struct {
 		// The token to connect to Discord
 		Token string
 		// Discord's client ID
-		ID int
+		ID string
 		// An illustration, for example its logo
 		Illustration string
 		// A website on which users can go for further information

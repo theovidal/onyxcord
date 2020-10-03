@@ -2,18 +2,19 @@ package lib
 
 import (
 	"fmt"
-	"github.com/andersfylling/disgord"
 	"time"
+
+	"github.com/bwmarrin/discordgo"
 )
 
 // MakeEmbed returns a Discord embed with the style of the bot
-func MakeEmbed(config *Config, base *disgord.Embed) *disgord.Embed {
-	return &disgord.Embed{
+func MakeEmbed(config *Config, base *discordgo.MessageEmbed) *discordgo.MessageEmbed {
+	return &discordgo.MessageEmbed{
 		Title:       base.Title,
 		Description: base.Description,
-		Timestamp:   disgord.Time{Time: time.Now().UTC()},
 		Color:       config.Bot.Color,
-		Footer: &disgord.EmbedFooter{
+		Timestamp:   time.Now().Format("2006-01-02T15:04:05-0700"),
+		Footer: &discordgo.MessageEmbedFooter{
 			Text:    fmt.Sprintf("%s v%s", config.Bot.Name, config.Dev.Version),
 			IconURL: config.Bot.Illustration,
 		},

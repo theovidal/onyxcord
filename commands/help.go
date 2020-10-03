@@ -3,7 +3,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/andersfylling/disgord"
+	"github.com/bwmarrin/discordgo"
 
 	"github.com/theovidal/onyxcord/lib"
 )
@@ -14,7 +14,7 @@ var help = lib.Command{
 	Category:       "utilities",
 	ListenInDM:     true,
 	ListenInPublic: true,
-	Execute: func(arguments []string, bot lib.Bot, context *disgord.MessageCreate) (err error) {
+	Execute: func(arguments []string, bot lib.Bot, message *discordgo.MessageCreate) (err error) {
 		commandsList := make(map[string]string)
 		for name, command := range bot.Commands {
 			if command.Show {
@@ -24,7 +24,7 @@ var help = lib.Command{
 			}
 		}
 
-		fullMessage := disgord.Embed{
+		fullMessage := discordgo.MessageEmbed{
 			Title: ":fast_forward: Commandes du robot",
 			Description: fmt.Sprintf(
 				"Voici une liste des commandes disponibles sur %s."+
@@ -34,18 +34,14 @@ var help = lib.Command{
 		}
 		for categoryName, commands := range commandsList {
 			category := bot.Config.Categories[categoryName]
-			fullMessage.Fields = append(fullMessage.Fields, &disgord.EmbedField{
+			fullMessage.Fields = append(fullMessage.Fields, &discordgo.MessageEmbedField{
 				Name:   fmt.Sprintf(":%s: %s", category.Emoji, category.Name),
 				Value:  commands,
 				Inline: true,
 			})
 		}
 
-		_ = bot.SendEmbed(
-			context.Ctx,
-			&fullMessage,
-			context.Message,
-		)
+		_, _ = bot.Client.ChannelMessageSendEmbed(message.ChannelID, lib.MakeEmbed(bot.Config, &fullMessage))
 		return
 	},
 }
