@@ -57,7 +57,7 @@ func ReactionRoleRemove(bot *lib.Bot, context *discordgo.MessageReactionRemove) 
 
 func ReactionRoleHandlerRemove(bot *lib.Bot, message *discordgo.MessageDelete) {
 	filter := GetFilter(message.ChannelID, message.ID)
-	result, _ := bot.Db.ReactionRoles.DeleteOne(context.Background(), filter)
+	result, _ := lib.Db.Database(bot.Config.Database).Collection("reactionRoles").DeleteOne(context.Background(), filter)
 	if result.DeletedCount == 0 {
 		return
 	}
@@ -83,7 +83,7 @@ func GetFilter(channelID, messageID string) bson.M {
 
 func FindReactionRoleHandler(bot *lib.Bot, channelID, messageID string) (found bool, channel *discordgo.Channel, data ReactionRole) {
 	filter := GetFilter(channelID, messageID)
-	err := bot.Db.ReactionRoles.FindOne(context.Background(), filter).Decode(&data)
+	err := lib.Db.Database(bot.Config.Database).Collection("reactionRoles").FindOne(context.Background(), filter).Decode(&data)
 	if err != nil {
 		return
 	}

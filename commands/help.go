@@ -8,7 +8,7 @@ import (
 	"github.com/theovidal/onyxcord/lib"
 )
 
-var help = lib.Command{
+var Help = lib.Command{
 	Description:    "Obtenir de l'aide sur les commandes du robot",
 	Usage:          "help",
 	Category:       "utilities",
@@ -33,7 +33,7 @@ var help = lib.Command{
 			),
 		}
 		for categoryName, commands := range commandsList {
-			category := bot.Config.Categories[categoryName]
+			category := lib.GlobalConfig.Categories[categoryName]
 			fullMessage.Fields = append(fullMessage.Fields, &discordgo.MessageEmbedField{
 				Name:   fmt.Sprintf(":%s: %s", category.Emoji, category.Name),
 				Value:  commands,

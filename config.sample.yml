@@ -8,7 +8,7 @@ bot:
   name: Boîte à bois
   token: Bot's token
   id: 549219394513797130
-  illustration: https://cdn.becauseofprog.fr/v2/projects/boite-a-bois.png
+  illustration: https://cdn.becauseofprog.fr/v2/projects/boite_a_bois.png
   website: https://github.com/theovidal/onyxcord
   prefix: b@
   color: 12000284
@@ -36,6 +36,6 @@ assets:
 database:
   address: localhost
   port: 1234
-  username: boite-a-bois
+  username: boite_a_bois
   password:
-  auth_source: boite-a-bois
+  auth_source: boite_a_bois

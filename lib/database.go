@@ -1,8 +1,30 @@
 package lib
 
-import "go.mongodb.org/mongo-driver/mongo"
+import (
+	"context"
+	"fmt"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+)
 
-type Database struct {
-	Client        *mongo.Client
-	ReactionRoles *mongo.Collection
+var Db *mongo.Client
+
+func OpenDatabase() {
+	uri := fmt.Sprint("mongodb://", GlobalConfig.Database.Address, ":", GlobalConfig.Database.Port)
+	var err error
+	Db, err = mongo.NewClient(
+		options.Client().ApplyURI(uri).SetAuth(options.Credential{
+			Username:   GlobalConfig.Database.Username,
+			Password:   GlobalConfig.Database.Password,
+			AuthSource: GlobalConfig.Database.AuthSource,
+		}),
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = Db.Connect(context.Background())
+	if err != nil {
+		panic(err)
+	}
 }

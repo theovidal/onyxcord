@@ -1,19 +1,17 @@
 package lib
 
 import (
-	"context"
 	"fmt"
 	"log"
-	"path/filepath"
 	"strings"
 
 	"github.com/bwmarrin/discordgo"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // Bot represents the Discord bot with its assets
 type Bot struct {
+	// Name of the bot
+	Name string
 	// The Discord client associated with the bot
 	Client *discordgo.Session
 	// A list of all the commands available on the bot
@@ -22,34 +20,14 @@ type Bot struct {
 	Config *Config
 	// The profile of the bot
 	User *discordgo.User
-	// The MongoDB attached to the bot
-	Db *Database
 }
 
-// LoadBot creates a new instance of the Discord Bot
-func LoadBot(commands map[string]*Command) Bot {
+// RegisterBot creates a new instance of the Discord Bot
+func RegisterBot(name string, commands map[string]*Command) Bot {
 	// Loading the configuration
-	config, err := GetConfig(filepath.Base("./config.yml"))
+	config, err := GetConfig(name)
 	if err != nil {
 		log.Panicf("Error while getting the configuration : %v", err)
-	}
-
-	// Loading the database
-	uri := fmt.Sprint("mongodb://", config.Database.Address, ":", config.Database.Port)
-	dbClient, err := mongo.NewClient(
-		options.Client().ApplyURI(uri).SetAuth(options.Credential{
-			Username:   config.Database.Username,
-			Password:   config.Database.Password,
-			AuthSource: config.Database.AuthSource,
-		}),
-	)
-	if err != nil {
-		panic(err)
-	}
-
-	err = dbClient.Connect(context.Background())
-	if err != nil {
-		panic(err)
 	}
 
 	// Creating the bot profile
@@ -65,23 +43,24 @@ func LoadBot(commands map[string]*Command) Bot {
 		log.Panicf("Error while creating the user profile : %v", err)
 	}
 
-	// Loading database collections
-	database := Database{
-		Client:        dbClient,
-		ReactionRoles: dbClient.Database(config.Database.Database).Collection("reactionRoles"),
-	}
-
-	return Bot{
+	bot := Bot{
+		Name:     name,
 		Client:   client,
 		Commands: commands,
 		Config:   &config,
 		User:     user,
-		Db:       &database,
 	}
+	client.AddHandler(func(session *discordgo.Session, message *discordgo.MessageCreate) {
+		bot.OnCommand(session, message)
+	})
+	return bot
 }
 
 // OnCommand reacts to a newly-created message and treats it
 func (bot *Bot) OnCommand(session *discordgo.Session, message *discordgo.MessageCreate) {
+	if !strings.HasPrefix(message.Content, bot.Config.Bot.Prefix) || message.Author.Bot {
+		return
+	}
 	parts := strings.Split(message.Content, " ")
 	commandName := strings.TrimPrefix(parts[0], bot.Config.Bot.Prefix)
 	command, exists := bot.Commands[commandName]
