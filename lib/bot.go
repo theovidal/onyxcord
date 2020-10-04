@@ -23,7 +23,7 @@ type Bot struct {
 }
 
 // RegisterBot creates a new instance of the Discord Bot
-func RegisterBot(name string, commands map[string]*Command) Bot {
+func RegisterBot(name string) Bot {
 	// Loading the configuration
 	config, err := GetConfig(name)
 	if err != nil {
@@ -46,7 +46,7 @@ func RegisterBot(name string, commands map[string]*Command) Bot {
 	bot := Bot{
 		Name:     name,
 		Client:   client,
-		Commands: commands,
+		Commands: make(map[string]*Command),
 		Config:   &config,
 		User:     user,
 	}
@@ -54,6 +54,10 @@ func RegisterBot(name string, commands map[string]*Command) Bot {
 		bot.OnCommand(session, message)
 	})
 	return bot
+}
+
+func (bot *Bot) RegisterCommand(name string, command *Command) {
+	bot.Commands[name] = command
 }
 
 // OnCommand reacts to a newly-created message and treats it

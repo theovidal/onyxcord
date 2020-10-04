@@ -2,14 +2,18 @@ package cuatro
 
 import (
 	"github.com/bwmarrin/discordgo"
-	"github.com/theovidal/onyxcord/bots/cuatro/handlers"
 
 	"github.com/theovidal/onyxcord/bots/cuatro/commands"
+	"github.com/theovidal/onyxcord/bots/cuatro/handlers"
 	"github.com/theovidal/onyxcord/lib"
 )
 
-func Install() *lib.Bot {
-	bot := lib.RegisterBot("cuatro", commands.List)
+func Install() lib.Bot {
+	bot := lib.RegisterBot("cuatro")
+
+	bot.RegisterCommand("archive", commands.Archive())
+	bot.RegisterCommand("reactionRole", commands.ReactionRole())
+
 	bot.Client.AddHandler(func(_ *discordgo.Session, message *discordgo.MessageDelete) {
 		handlers.ReactionRoleHandlerRemove(&bot, message)
 	})
@@ -20,5 +24,6 @@ func Install() *lib.Bot {
 		handlers.ReactionRoleRemove(&bot, reaction)
 	})
 	bot.Client.Identify.Intents = discordgo.MakeIntent(discordgo.IntentsGuildMessages | discordgo.IntentsGuildMessageReactions)
-	return &bot
+
+	return bot
 }

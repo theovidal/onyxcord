@@ -21,15 +21,17 @@ var pingSentences = []string{
 	"OK boomer",
 }
 
-var ping = lib.Command{
-	Description: "Tester si le robot répond correctement",
-	Usage:       "ping",
-	Category:    "utilities",
-	Show:        false,
-	ListenInDM:  true,
-	Execute: func(arguments []string, bot lib.Bot, message *discordgo.MessageCreate) (err error) {
-		sentenceNumber := rand.Intn(len(pingSentences))
-		_, err = bot.Client.ChannelMessageSend(message.ChannelID, pingSentences[sentenceNumber])
-		return
-	},
+func Ping() *lib.Command {
+	return &lib.Command{
+		Description: "Tester si le robot répond correctement",
+		Usage:       "ping",
+		Category:    "utilities",
+		Show:        false,
+		ListenInDM:  true,
+		Execute: func(arguments []string, bot lib.Bot, message *discordgo.MessageCreate) (err error) {
+			sentenceNumber := rand.Intn(len(pingSentences))
+			_, err = bot.Client.ChannelMessageSend(message.ChannelID, pingSentences[sentenceNumber])
+			return
+		},
+	}
 }

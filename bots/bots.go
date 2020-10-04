@@ -6,7 +6,7 @@ import (
 	"github.com/theovidal/onyxcord/lib"
 )
 
-var Bots = map[*lib.Bot]bool{
-	boite_a_bois.Install(): true,
-	cuatro.Install():       true,
+var Bots = map[string]lib.Bot{
+	"boite_a_bois": boite_a_bois.Install(),
+	"cuatro":       cuatro.Install(),
 }

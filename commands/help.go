@@ -8,40 +8,42 @@ import (
 	"github.com/theovidal/onyxcord/lib"
 )
 
-var Help = lib.Command{
-	Description:    "Obtenir de l'aide sur les commandes du robot",
-	Usage:          "help",
-	Category:       "utilities",
-	ListenInDM:     true,
-	ListenInPublic: true,
-	Execute: func(arguments []string, bot lib.Bot, message *discordgo.MessageCreate) (err error) {
-		commandsList := make(map[string]string)
-		for name, command := range bot.Commands {
-			if command.Show {
-				continue
-			} else {
-				commandsList[command.Category] += command.Prettify(name, bot.Config.Bot.Prefix) + "\n"
+func Help() *lib.Command {
+	return &lib.Command{
+		Description:    "Obtenir de l'aide sur les commandes du robot",
+		Usage:          "help",
+		Category:       "utilities",
+		ListenInDM:     true,
+		ListenInPublic: true,
+		Execute: func(arguments []string, bot lib.Bot, message *discordgo.MessageCreate) (err error) {
+			commandsList := make(map[string]string)
+			for name, command := range bot.Commands {
+				if command.Show {
+					continue
+				} else {
+					commandsList[command.Category] += command.Prettify(name, bot.Config.Bot.Prefix) + "\n"
+				}
 			}
-		}
 
-		fullMessage := discordgo.MessageEmbed{
-			Title: ":fast_forward: Commandes du robot",
-			Description: fmt.Sprintf(
-				"Voici une liste des commandes disponibles sur %s."+
-					"Elles s'exécutent dans un salon textuel avec, ou non, des arguments séparés par une virgule.",
-				bot.Config.Bot.Name,
-			),
-		}
-		for categoryName, commands := range commandsList {
-			category := lib.GlobalConfig.Categories[categoryName]
-			fullMessage.Fields = append(fullMessage.Fields, &discordgo.MessageEmbedField{
-				Name:   fmt.Sprintf(":%s: %s", category.Emoji, category.Name),
-				Value:  commands,
-				Inline: true,
-			})
-		}
+			fullMessage := discordgo.MessageEmbed{
+				Title: ":fast_forward: Commandes du robot",
+				Description: fmt.Sprintf(
+					"Voici une liste des commandes disponibles sur %s. "+
+						"Elles s'exécutent dans un salon textuel avec, ou non, des arguments séparés par une virgule.",
+					bot.Config.Bot.Name,
+				),
+			}
+			for categoryName, commands := range commandsList {
+				category := lib.GlobalConfig.Categories[categoryName]
+				fullMessage.Fields = append(fullMessage.Fields, &discordgo.MessageEmbedField{
+					Name:   fmt.Sprintf(":%s: %s", category.Emoji, category.Name),
+					Value:  commands,
+					Inline: true,
+				})
+			}
 
-		_, _ = bot.Client.ChannelMessageSendEmbed(message.ChannelID, lib.MakeEmbed(bot.Config, &fullMessage))
-		return
-	},
+			_, _ = bot.Client.ChannelMessageSendEmbed(message.ChannelID, lib.MakeEmbed(bot.Config, &fullMessage))
+			return
+		},
+	}
 }

@@ -22,6 +22,7 @@ func remove(s []string, i int) []string {
 }
 
 func ReactionRoleAdd(bot *lib.Bot, context *discordgo.MessageReactionAdd) {
+	println("haha")
 	if context.UserID == bot.User.ID {
 		return
 	}
