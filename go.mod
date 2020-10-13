@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/bwmarrin/discordgo v0.22.0
 	github.com/exybore/goweather v0.1.1
+	github.com/jinzhu/gorm v1.9.16
 	go.mongodb.org/mongo-driver v1.4.0
 	go.uber.org/multierr v1.4.0 // indirect
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect

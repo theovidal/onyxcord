@@ -2,3 +2,4 @@ config.yml
 roles.yml
 .idea/
 .vscode
+*.sqlite
