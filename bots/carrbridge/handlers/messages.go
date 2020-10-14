@@ -1,28 +1,36 @@
 package handlers
 
 import (
+	"context"
+	"encoding/hex"
 	"log"
-	"os"
+	"math/rand"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"go.mongodb.org/mongo-driver/bson"
 
 	"github.com/theovidal/onyxcord/lib"
 )
 
+func _() string {
+	b := make([]byte, 10)
+	if _, err := rand.Read(b); err != nil {
+		return ""
+	}
+	return hex.EncodeToString(b)
+}
+
 type Router struct {
-	ID          uint `gorm:"primary_key"`
-	Name        string
-	Description string
+	Token       string `json:"token"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Plugs       []Plug `json:"plugs"`
 }
 
 type Plug struct {
-	ID      uint `gorm:"primary_key"`
-	Router  uint
-	Channel string
-	Webhook string
-	Token   string
+	Channel string `json:"channel"`
+	Webhook string `json:"webhook"`
+	Token   string `json:"token"`
 }
 
 func MessageTransfer(bot *lib.Bot, msg *discordgo.MessageCreate) {
@@ -30,48 +38,57 @@ func MessageTransfer(bot *lib.Bot, msg *discordgo.MessageCreate) {
 		return
 	}
 
-	filename := "testing.sqlite"
+	ctx := context.Background()
+	routers := lib.Db.Database(bot.Config.Database).Collection(bot.Config.Assets["routers_collection"])
 
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
-		_, err := os.Create(filename)
-		if err != nil {
-			log.Fatalf("Error while creating the database: %s", err)
-		}
-	}
-
-	db, err := gorm.Open("sqlite3", filename)
+	var connectedRouters []Router
+	results, err := routers.Find(ctx, bson.M{
+		"plugs": bson.M{
+			"$elemMatch": bson.M{
+				"channel": msg.ChannelID,
+			},
+		},
+	})
 	if err != nil {
-		log.Fatalf("Failed to open database: %s", err)
-	}
-
-	var originPlug Plug
-	db.Where("channel = ?", msg.ChannelID).First(&originPlug)
-	if originPlug.Router == 0 {
+		log.Println(err)
 		return
 	}
 
-	var plugs []Plug
-	db.Where("router = ?", originPlug.Router).Find(&plugs)
-	for _, plug := range plugs {
-		if plug.ID == originPlug.ID {
-			continue
-		}
-		avatar := msg.Author.AvatarURL("128")
-		var name string
-		member, _ := bot.Client.GuildMember(msg.GuildID, msg.Author.ID)
-		if member.Nick != "" {
-			name = member.Nick
-		} else {
-			name = msg.Author.Username
-		}
+	err = results.All(ctx, &connectedRouters)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
-		_, err := bot.Client.WebhookExecute(plug.Webhook, plug.Token, false, &discordgo.WebhookParams{
-			Content:   msg.Content,
-			Username:  name,
-			AvatarURL: avatar,
-		})
-		if err != nil {
-			log.Println(err)
+	for _, router := range connectedRouters {
+		for _, plug := range router.Plugs {
+			if plug.Channel == msg.ChannelID {
+				continue
+			}
+			avatar := msg.Author.AvatarURL("128")
+			var name string
+			member, _ := bot.Client.GuildMember(msg.GuildID, msg.Author.ID)
+			if member.Nick != "" {
+				name = member.Nick
+			} else {
+				name = msg.Author.Username
+			}
+
+			content := msg.Content
+			for _, file := range msg.Attachments {
+				content += file.ProxyURL
+			}
+
+			if content != "" {
+				_, err := bot.Client.WebhookExecute(plug.Webhook, plug.Token, false, &discordgo.WebhookParams{
+					Username:  name,
+					AvatarURL: avatar,
+					Content:   content,
+				})
+				if err != nil {
+					log.Println(err)
+				}
+			}
 		}
 	}
 }
