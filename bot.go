@@ -1,9 +1,14 @@
-package lib
+package onyxcord
 
 import (
+	"context"
 	"fmt"
+	"go.mongodb.org/mongo-driver/mongo"
 	"log"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 
 	"github.com/bwmarrin/discordgo"
 )
@@ -16,6 +21,8 @@ type Bot struct {
 	Client *discordgo.Session
 	// A list of all the commands available on the bot
 	Commands map[string]*Command
+	// The mongodb database attached to the bot (if used)
+	Database *mongo.Client
 	// The configuration of the bot, as defined in the corresponding file
 	Config *Config
 	// The profile of the bot
@@ -25,7 +32,7 @@ type Bot struct {
 // RegisterBot creates a new instance of the Discord Bot
 func RegisterBot(name string) Bot {
 	// Loading the configuration
-	config, err := GetConfig(name)
+	config, err := GetConfig()
 	if err != nil {
 		log.Panicf("Error while getting the configuration : %v", err)
 	}
@@ -50,7 +57,8 @@ func RegisterBot(name string) Bot {
 		Config:   &config,
 		User:     user,
 	}
-	client.AddHandler(func(session *discordgo.Session, message *discordgo.MessageCreate) {
+	bot.Commands["help"] = Help()
+	bot.Client.AddHandler(func(session *discordgo.Session, message *discordgo.MessageCreate) {
 		bot.OnCommand(session, message)
 	})
 	return bot
@@ -58,6 +66,39 @@ func RegisterBot(name string) Bot {
 
 func (bot *Bot) RegisterCommand(name string, command *Command) {
 	bot.Commands[name] = command
+}
+
+// Run starts the bot and connects it to Discord
+func (bot *Bot) Run() {
+	fmt.Println(" ________  ________       ___    ___ ___    ___ \n|\\   __  \\|\\   ___  \\    |\\  \\  /  /|\\  \\  /  /|\n\\ \\  \\|\\  \\ \\  \\\\ \\  \\   \\ \\  \\/  / | \\  \\/  / /\n \\ \\  \\\\\\  \\ \\  \\\\ \\  \\   \\ \\    / / \\ \\    / / \n  \\ \\  \\\\\\  \\ \\  \\\\ \\  \\   \\/  /  /   /     \\/  \n   \\ \\_______\\ \\__\\\\ \\__\\__/  / /    /  /\\   \\  \n    \\|_______|\\|__| \\|__|\\___/ /    /__/ /\\ __\\ \n                        \\|___|/     |__|/ \\|__| ")
+
+	if bot.Config.Database.Address != "" {
+		log.Println("Opening database...")
+		bot.Database = OpenDatabase(bot.Config)
+	}
+
+	log.Println("Connecting bot...")
+	// Open a websocket connection to Discord and begin listening.
+	err := bot.Client.Open()
+	if err != nil {
+		log.Fatalf("Error opening connection with bot %s: %s\n", bot.Name, err)
+	}
+	log.Printf("%s#%s logged in!\n", bot.User.Username, bot.User.Discriminator)
+
+	// Wait here until CTRL-C or other term signal is received.
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	<-sc
+
+	log.Println("Closing down bots...")
+
+	bot.Client.Close()
+	log.Printf("%s#%s disconnected\n", bot.User.Username, bot.User.Discriminator)
+
+	if bot.Config.Database.Address != "" {
+		bot.Database.Disconnect(context.Background())
+	}
+	log.Println("Goodbye!")
 }
 
 // OnCommand reacts to a newly-created message and treats it

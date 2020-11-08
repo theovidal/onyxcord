@@ -1,21 +1,18 @@
-package commands
+package onyxcord
 
 import (
 	"fmt"
-
 	"github.com/bwmarrin/discordgo"
-
-	"github.com/theovidal/onyxcord/lib"
 )
 
-func Help() *lib.Command {
-	return &lib.Command{
+func Help() *Command {
+	return &Command{
 		Description:    "Obtenir de l'aide sur les commandes du robot",
 		Usage:          "help",
 		Category:       "utilities",
 		ListenInDM:     true,
 		ListenInPublic: true,
-		Execute: func(arguments []string, bot lib.Bot, message *discordgo.MessageCreate) (err error) {
+		Execute: func(arguments []string, bot Bot, message *discordgo.MessageCreate) (err error) {
 			commandsList := make(map[string]string)
 			for name, command := range bot.Commands {
 				if command.Show {
@@ -34,7 +31,7 @@ func Help() *lib.Command {
 				),
 			}
 			for categoryName, commands := range commandsList {
-				category := lib.GlobalConfig.Categories[categoryName]
+				category := bot.Config.Categories[categoryName]
 				fullMessage.Fields = append(fullMessage.Fields, &discordgo.MessageEmbedField{
 					Name:   fmt.Sprintf(":%s: %s", category.Emoji, category.Name),
 					Value:  commands,
@@ -42,7 +39,7 @@ func Help() *lib.Command {
 				})
 			}
 
-			_, _ = bot.Client.ChannelMessageSendEmbed(message.ChannelID, lib.MakeEmbed(bot.Config, &fullMessage))
+			_, _ = bot.Client.ChannelMessageSendEmbed(message.ChannelID, MakeEmbed(bot.Config, &fullMessage))
 			return
 		},
 	}

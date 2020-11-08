@@ -1,37 +1,12 @@
-package lib
+package onyxcord
 
 import (
 	"io/ioutil"
+	"os"
 
+	"github.com/joho/godotenv"
 	"gopkg.in/yaml.v2"
 )
-
-type GlobalConfigStruct struct {
-	// A list of command categories
-	Categories map[string]struct {
-		// Their name, displayed in the help command
-		Name string
-		// Their emoji, displayed in the help command
-		Emoji string
-	}
-	// Some assets user can add
-	Assets map[string]string
-	// Information to connect to the MongoDB database
-	Database struct {
-		// Address of the database (e.g : localhost)
-		Address string
-		// Port of the database (e.g : 1234)
-		Port int
-		// Username to connect to the database (e.g : onyxcord)
-		Username string
-		// Password for this username
-		Password string
-		// Database to connect from (e.g : onyxcord)
-		AuthSource string `yaml:"auth_source"`
-	}
-}
-
-var GlobalConfig = GetGlobalConfig()
 
 // Config represents the configuration stored in the file
 type Config struct {
@@ -64,15 +39,37 @@ type Config struct {
 		// The color theme of the bot (e.g #b7c1c)
 		Color int
 	}
-	// Database used by the bot
-	Database string
+	// A list of command categories
+	Categories map[string]struct {
+		// Their name, displayed in the help command
+		Name string
+		// Their emoji, displayed in the help command
+		Emoji string
+	}
 	// Some assets user can add
 	Assets map[string]string
+	// Information to connect to the MongoDB database
+	Database struct {
+		// Address of the database (e.g : localhost)
+		Address string
+		// Port of the database (e.g : 1234)
+		Port int
+		// Username to connect to the database (e.g : onyxcord)
+		Username string
+		// Password for this username
+		Password string
+		// Database to use
+		Database string
+		// Database to connect from (e.g : onyxcord)
+		AuthSource string `yaml:"auth_source"`
+	}
 }
 
 // GetConfig reads a specific bot configuration and parses it into the Config structure
-func GetConfig(name string) (config Config, err error) {
-	data, err := OpenFile("./bots/" + name + "/config.yml")
+func GetConfig() (config Config, err error) {
+	godotenv.Load()
+
+	data, err := OpenFile("./config.yml")
 	if err != nil {
 		return
 	}
@@ -80,18 +77,9 @@ func GetConfig(name string) (config Config, err error) {
 	config = Config{}
 	err = yaml.Unmarshal(data, &config)
 
-	return
-}
-
-// GetConfig reads the global configuration and parses it into the GlobalConfigStruct structure
-func GetGlobalConfig() (config GlobalConfigStruct) {
-	data, err := OpenFile("./config.yml")
-	if err != nil {
-		panic(err)
-	}
-
-	config = GlobalConfigStruct{}
-	err = yaml.Unmarshal(data, &config)
+	config.Bot.Token = os.Getenv("DISCORD_TOKEN")
+	config.Database.Username = os.Getenv("DATABASE_USERNAME")
+	config.Database.Username = os.Getenv("DATABASE_PASSWORD")
 
 	return
 }
