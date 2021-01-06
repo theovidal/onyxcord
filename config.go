@@ -34,9 +34,9 @@ type Config struct {
 		Illustration string
 		// A website on which users can go for further information
 		Website string
-		// Prefix for all the commands (e.g : !)
+		// Prefix for all the commands (e.g: !)
 		Prefix string
-		// The color theme of the bot (e.g #b7c1c)
+		// The color theme of the bot (e.g: #b7c1c)
 		Color int
 	}
 	// A list of command categories
@@ -50,23 +50,23 @@ type Config struct {
 	Assets map[string]string
 	// Information to connect to the MongoDB database
 	Database struct {
-		// Address of the database (e.g : localhost)
+		// Address of the database (e.g: localhost)
 		Address string
-		// Port of the database (e.g : 1234)
+		// Port of the database (e.g: 1234)
 		Port int
-		// Username to connect to the database (e.g : onyxcord)
+		// Username to connect to the database (e.g: onyxcord)
 		Username string
 		// Password for this username
 		Password string
 		// Database to use
 		Database string
-		// Database to connect from (e.g : onyxcord)
+		// Database to connect from (e.g: onyxcord)
 		AuthSource string `yaml:"auth_source"`
 	}
 	Cache struct {
-		// Address of the cache (e.g : localhost)
+		// Address of the cache (e.g: localhost)
 		Address string
-		// Port of the database (e.g : 6379)
+		// Port of the database (e.g: 6379)
 		Port string
 	}
 }

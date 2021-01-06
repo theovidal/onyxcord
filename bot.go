@@ -92,12 +92,6 @@ func (bot *Bot) Run() {
 	if err != nil {
 		log.Fatalf("‼ Error opening connection with bot %s: %s\n", bot.Name, err)
 	}
-	bot.Client.UpdateStatusComplex(discordgo.UpdateStatusData{
-		IdleSince: nil,
-		Game:      nil,
-		AFK:       false,
-		Status:    "",
-	})
 	log.Printf("✅ %s#%s logged in!\n", bot.User.Username, bot.User.Discriminator)
 
 	// Wait here until CTRL-C or other term signal is received.
