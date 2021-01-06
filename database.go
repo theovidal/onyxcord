@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
 )
 
 func OpenDatabase(config *Config) (client *mongo.Client) {
@@ -18,12 +19,12 @@ func OpenDatabase(config *Config) (client *mongo.Client) {
 		}),
 	)
 	if err != nil {
-		panic(err)
+		log.Panicf("‼ Error creating database entity: %s", err.Error())
 	}
 
 	err = client.Connect(context.Background())
 	if err != nil {
-		panic(err)
+		log.Panicf("‼ Error connecting to database: %s", err.Error())
 	}
 
 	return

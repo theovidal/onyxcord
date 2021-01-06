@@ -63,6 +63,12 @@ type Config struct {
 		// Database to connect from (e.g : onyxcord)
 		AuthSource string `yaml:"auth_source"`
 	}
+	Cache struct {
+		// Address of the cache (e.g : localhost)
+		Address string
+		// Port of the database (e.g : 6379)
+		Port string
+	}
 }
 
 // GetConfig reads a specific bot configuration and parses it into the Config structure
