@@ -2,10 +2,17 @@ package onyxcord
 
 import (
 	"fmt"
+	"io/ioutil"
 	"time"
 
 	"github.com/bwmarrin/discordgo"
 )
+
+// OpenFile opens a file from a path
+func OpenFile(path string) (data []byte, err error) {
+	data, err = ioutil.ReadFile(path)
+	return
+}
 
 // MakeEmbed returns a Discord embed with the style of the bot
 func MakeEmbed(config *Config, base *discordgo.MessageEmbed) *discordgo.MessageEmbed {

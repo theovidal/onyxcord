@@ -1,7 +1,6 @@
 package onyxcord
 
 import (
-	"io/ioutil"
 	"os"
 
 	"github.com/joho/godotenv"
@@ -66,8 +65,10 @@ type Config struct {
 	Cache struct {
 		// Address of the cache (e.g: localhost)
 		Address string
-		// Port of the database (e.g: 6379)
+		// Port of the cache (e.g: 6379)
 		Port string
+		// Password to access the cache (optional but strongly recommended)
+		Password string
 	}
 }
 
@@ -75,7 +76,14 @@ type Config struct {
 func GetConfig() (config Config, err error) {
 	godotenv.Load()
 
-	data, err := OpenFile("./config.yml")
+	var path string
+	if os.Getenv("ONYXCORD_ENV") == "development" {
+		path = "./config.dev.yml"
+	} else {
+		path = "./config.yml"
+	}
+
+	data, err := OpenFile(path)
 	if err != nil {
 		return
 	}
@@ -86,12 +94,7 @@ func GetConfig() (config Config, err error) {
 	config.Bot.Token = os.Getenv("DISCORD_TOKEN")
 	config.Database.Username = os.Getenv("DATABASE_USERNAME")
 	config.Database.Username = os.Getenv("DATABASE_PASSWORD")
+	config.Cache.Password = os.Getenv("CACHE_PASSWORD")
 
-	return
-}
-
-// OpenFile opens a file from a path
-func OpenFile(path string) (data []byte, err error) {
-	data, err = ioutil.ReadFile(path)
 	return
 }
