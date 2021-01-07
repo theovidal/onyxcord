@@ -2,22 +2,25 @@ package onyxcord
 
 import (
 	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 )
 
 func Help() *Command {
 	return &Command{
 		Description:    "Obtenir de l'aide sur les commandes du robot",
-		Usage:          "help",
-		Category:       "utilities",
+		Show:           true,
 		ListenInDM:     true,
 		ListenInPublic: true,
 		Execute: func(arguments []string, bot Bot, message *discordgo.MessageCreate) (err error) {
 			commandsList := make(map[string]string)
 			for name, command := range bot.Commands {
-				if command.Show {
+				if !command.Show {
 					continue
 				} else {
+					if command.Category == "" {
+						command.Category = "default"
+					}
 					commandsList[command.Category] += command.Prettify(name, bot.Config.Bot.Prefix) + "\n"
 				}
 			}
@@ -39,6 +42,7 @@ func Help() *Command {
 				})
 			}
 
+			fmt.Println(message.ChannelID, message.Author.ID)
 			_, _ = bot.Client.ChannelMessageSendEmbed(message.ChannelID, MakeEmbed(bot.Config, &fullMessage))
 			return
 		},

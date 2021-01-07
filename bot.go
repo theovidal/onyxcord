@@ -3,8 +3,6 @@ package onyxcord
 import (
 	"context"
 	"fmt"
-	"github.com/go-redis/redis/v8"
-	"go.mongodb.org/mongo-driver/mongo"
 	"log"
 	"os"
 	"os/signal"
@@ -12,6 +10,8 @@ import (
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/go-redis/redis/v8"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 // Bot represents the Discord bot with its assets
@@ -114,8 +114,9 @@ func (bot *Bot) OnCommand(session *discordgo.Session, message *discordgo.Message
 	if !strings.HasPrefix(message.Content, bot.Config.Bot.Prefix) || message.Author.Bot {
 		return
 	}
+	message.Content = strings.TrimPrefix(message.Content, bot.Config.Bot.Prefix)
 	parts := strings.Split(message.Content, " ")
-	commandName := strings.TrimPrefix(parts[0], bot.Config.Bot.Prefix)
+	commandName := parts[0]
 	command, exists := bot.Commands[commandName]
 	if !exists {
 		_, _ = session.ChannelMessageSendEmbed(message.ChannelID,
@@ -130,14 +131,29 @@ func (bot *Bot) OnCommand(session *discordgo.Session, message *discordgo.Message
 		return
 	}
 
-	if command.ListenInDM && message.ChannelID == "" || command.ListenInPublic && message.ChannelID != "" {
-		argumentsPart := strings.Join(parts[1:], " ")
-		arguments := strings.Split(argumentsPart, ",")
-		bot.ExecuteCommand(command, arguments, message)
+	if !(command.ListenInDM && message.GuildID == "" || command.ListenInPublic && message.GuildID != "") {
+		return
 	}
+
+	// TODO: permission check (UserChannelPermissions method always returns 0)
+	/*userPermissions, _ := session.State.UserChannelPermissions(message.Author.ID, message.ChannelID)
+	if command.Permissions != 0 && command.Permissions & userPermissions == 0 {
+		_, _ = session.ChannelMessageSendEmbed(message.ChannelID,
+			MakeEmbed(bot.Config, &discordgo.MessageEmbed{
+				Title: ":x: Vous n'avez pas la permission d'exécuter cette commande.",
+				Color: 12000284,
+			}),
+		)
+		return
+	}*/
+
+	argumentsPart := strings.Join(parts[1:], " ")
+	arguments := strings.Split(argumentsPart, ",")
+	bot.ExecuteCommand(command, arguments, message)
 }
 
 // ExecuteCommand executes the command parsed in the OnCommand function
+// **It shouldn't be used by the end-user, but is stayed as public for flexibility**
 func (bot *Bot) ExecuteCommand(command *Command, arguments []string, message *discordgo.MessageCreate) {
 	err := command.Execute(arguments, *bot, message)
 	if err != nil {

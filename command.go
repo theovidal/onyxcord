@@ -2,6 +2,7 @@ package onyxcord
 
 import (
 	"fmt"
+
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -21,19 +22,19 @@ type Command struct {
 	ListenInPublic bool
 	// Whether the bot should listen to the command in direct messages
 	ListenInDM bool
-	// Lock the command only for certain channels
-	Channels []int
-	// Lock the command only for certain user roles
-	Roles []int
-	// Lock the command only for certain members on the server
-	Members []int
+	// Required permissions for the user to execute the command
+	// See https://discordapi.com/permissions.html to generate the permission integer you want
+	Permissions int
 	// Action to execute if the command is triggered
 	Execute func(arguments []string, bot Bot, message *discordgo.MessageCreate) (err error)
 }
 
 // Prettify returns a string with information about a command, ready to be printed to the user
 func (command Command) Prettify(name string, prefix string) (prettified string) {
-	prettified = fmt.Sprintf("● **%s%s** : %s\nUtilisation : `%s`", prefix, name, command.Description, command.Usage)
+	prettified = fmt.Sprintf("● **%s%s** : %s", prefix, name, command.Description)
+	if command.Usage != "" {
+		prettified += fmt.Sprintf("\nUtilisation : `%s`", command.Usage)
+	}
 	if command.Alias != "" {
 		prettified += fmt.Sprintf("\nAlias : `%s`", command.Alias)
 	}

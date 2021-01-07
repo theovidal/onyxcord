@@ -3,11 +3,13 @@ package onyxcord
 import (
 	"context"
 	"fmt"
+	"log"
+
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
 )
 
+// OpenDatabase returns the mongodb database client (if needed and taking credentials from the configuration file)
 func OpenDatabase(config *Config) (client *mongo.Client) {
 	uri := fmt.Sprint("mongodb://", config.Database.Address, ":", config.Database.Port)
 	var err error
