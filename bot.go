@@ -126,7 +126,7 @@ func (bot *Bot) OnCommand(session *discordgo.Session, message *discordgo.Message
 				Description: fmt.Sprintf(
 					"\nExécutez `%shelp` pour obtenir la liste des commandes disponibles.",
 					bot.Config.Bot.Prefix),
-				Color: bot.Config.Bot.Color,
+				Color: bot.Config.Bot.ErrorColor,
 			}),
 		)
 		return
@@ -167,7 +167,7 @@ func (bot *Bot) ExecuteCommand(command *Command, arguments []string, message *di
 					err, bot.Config.Dev.Maintainer.Name,
 					bot.Config.Dev.Maintainer.Link,
 				),
-				Color: 12000284,
+				Color: bot.Config.Bot.ErrorColor,
 			}),
 		)
 	}
