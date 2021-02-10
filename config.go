@@ -93,7 +93,7 @@ func GetConfig() (config Config, err error) {
 
 	config.Bot.Token = os.Getenv("DISCORD_TOKEN")
 	config.Database.Username = os.Getenv("DATABASE_USERNAME")
-	config.Database.Username = os.Getenv("DATABASE_PASSWORD")
+	config.Database.Password = os.Getenv("DATABASE_PASSWORD")
 	config.Cache.Password = os.Getenv("CACHE_PASSWORD")
 
 	return

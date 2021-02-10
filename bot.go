@@ -33,7 +33,7 @@ type Bot struct {
 }
 
 // RegisterBot creates a new instance of the Discord Bot
-func RegisterBot(name string, registerHandler bool) Bot {
+func RegisterBot(name string) Bot {
 	// Loading the configuration
 	config, err := GetConfig()
 	if err != nil {
@@ -61,11 +61,6 @@ func RegisterBot(name string, registerHandler bool) Bot {
 		User:     user,
 	}
 	bot.Commands["help"] = Help()
-	if registerHandler {
-		bot.Client.AddHandler(func(session *discordgo.Session, message *discordgo.MessageCreate) {
-			bot.OnCommand(session, message)
-		})
-	}
 	return bot
 }
 
@@ -74,7 +69,7 @@ func (bot *Bot) RegisterCommand(name string, command *Command) {
 }
 
 // Run starts the bot and connects it to Discord
-func (bot *Bot) Run() {
+func (bot *Bot) Run(registerHandler bool) {
 	fmt.Println(" ________  ________       ___    ___ ___    ___ \n|\\   __  \\|\\   ___  \\    |\\  \\  /  /|\\  \\  /  /|\n\\ \\  \\|\\  \\ \\  \\\\ \\  \\   \\ \\  \\/  / | \\  \\/  / /\n \\ \\  \\\\\\  \\ \\  \\\\ \\  \\   \\ \\    / / \\ \\    / / \n  \\ \\  \\\\\\  \\ \\  \\\\ \\  \\   \\/  /  /   /     \\/  \n   \\ \\_______\\ \\__\\\\ \\__\\__/  / /    /  /\\   \\  \n    \\|_______|\\|__| \\|__|\\___/ /    /__/ /\\ __\\ \n                        \\|___|/     |__|/ \\|__| ")
 
 	if bot.Config.Database.Address != "" {
@@ -84,6 +79,12 @@ func (bot *Bot) Run() {
 	if bot.Config.Cache.Address != "" {
 		log.Println("⏩ Opening cache...")
 		bot.Cache = OpenCache(bot.Config)
+	}
+
+	if registerHandler {
+		bot.Client.AddHandler(func(session *discordgo.Session, message *discordgo.MessageCreate) {
+			bot.OnCommand(session, message)
+		})
 	}
 
 	log.Println("⏩ Connecting bot...")
@@ -155,7 +156,7 @@ func (bot *Bot) OnCommand(session *discordgo.Session, message *discordgo.Message
 // ExecuteCommand executes the command parsed in the OnCommand function
 // **It shouldn't be used by the end-user, but is stayed as public for flexibility**
 func (bot *Bot) ExecuteCommand(command *Command, arguments []string, message *discordgo.MessageCreate) {
-	err := command.Execute(arguments, *bot, message)
+	err := command.Execute(arguments, bot, message)
 	if err != nil {
 		_, _ = bot.Client.ChannelMessageSendEmbed(message.ChannelID,
 			MakeEmbed(bot.Config, &discordgo.MessageEmbed{

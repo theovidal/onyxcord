@@ -26,7 +26,7 @@ type Command struct {
 	// See https://discordapi.com/permissions.html to generate the permission integer you want
 	Permissions int
 	// Action to execute if the command is triggered
-	Execute func(arguments []string, bot Bot, message *discordgo.MessageCreate) (err error)
+	Execute func(arguments []string, bot *Bot, message *discordgo.MessageCreate) (err error)
 }
 
 // Prettify returns a string with information about a command, ready to be printed to the user
