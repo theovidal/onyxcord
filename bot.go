@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"strings"
 	"syscall"
 
 	"github.com/bwmarrin/discordgo"
@@ -60,7 +59,6 @@ func RegisterBot(name string) Bot {
 		Config:   &config,
 		User:     user,
 	}
-	bot.Commands["help"] = Help()
 	return bot
 }
 
@@ -82,8 +80,8 @@ func (bot *Bot) Run(registerHandler bool) {
 	}
 
 	if registerHandler {
-		bot.Client.AddHandler(func(session *discordgo.Session, message *discordgo.MessageCreate) {
-			bot.OnCommand(session, message)
+		bot.Client.AddHandler(func(_ *discordgo.Session, interaction *discordgo.InteractionCreate) {
+			bot.ExecuteCommand(interaction)
 		})
 	}
 
@@ -110,65 +108,50 @@ func (bot *Bot) Run(registerHandler bool) {
 	log.Println("👋 Goodbye!")
 }
 
-// OnCommand reacts to a newly-created message and treats it
-func (bot *Bot) OnCommand(session *discordgo.Session, message *discordgo.MessageCreate) {
-	if !strings.HasPrefix(message.Content, bot.Config.Bot.Prefix) || message.Author.Bot {
-		return
-	}
-	message.Content = strings.TrimPrefix(message.Content, bot.Config.Bot.Prefix)
-	parts := strings.Split(message.Content, " ")
-	commandName := parts[0]
-	command, exists := bot.Commands[commandName]
+// ExecuteCommand executes an interaction (or slash command)
+func (bot *Bot) ExecuteCommand(interaction *discordgo.InteractionCreate) {
+	command, exists := bot.Commands[interaction.Data.Name]
 	if !exists {
-		_, _ = session.ChannelMessageSendEmbed(message.ChannelID,
-			MakeEmbed(bot.Config, &discordgo.MessageEmbed{
-				Title: fmt.Sprintf(":question: La commande %s est inconnue", commandName),
-				Description: fmt.Sprintf(
-					"\nExécutez `%shelp` pour obtenir la liste des commandes disponibles.",
-					bot.Config.Bot.Prefix),
-				Color: bot.Config.Bot.ErrorColor,
-			}),
-		)
+		log.Panicf("Interaction with name %s is not implemented into the bot", interaction.Data.Name)
+	}
+
+	if command.ListenInDM && !command.ListenInPublic && interaction.GuildID != "" {
+		_ = bot.Client.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: 4,
+			Data: &discordgo.InteractionApplicationCommandResponseData{
+				Content: "🚫 Cette commande ne peut être executée qu'en message privé.",
+			},
+		})
+		return
+	}
+	if command.ListenInPublic && !command.ListenInDM && interaction.GuildID == "" {
+		_ = bot.Client.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: 4,
+			Data: &discordgo.InteractionApplicationCommandResponseData{
+				Content: "🚫 Cette commande ne peut être executée que dans un salon public.",
+			},
+		})
 		return
 	}
 
-	if !(command.ListenInDM && message.GuildID == "" || command.ListenInPublic && message.GuildID != "") {
-		return
-	}
-
-	// TODO: permission check (UserChannelPermissions method always returns 0)
-	/*userPermissions, _ := session.State.UserChannelPermissions(message.Author.ID, message.ChannelID)
-	if command.Permissions != 0 && command.Permissions & userPermissions == 0 {
-		_, _ = session.ChannelMessageSendEmbed(message.ChannelID,
-			MakeEmbed(bot.Config, &discordgo.MessageEmbed{
-				Title: ":x: Vous n'avez pas la permission d'exécuter cette commande.",
-				Color: 12000284,
-			}),
-		)
-		return
-	}*/
-
-	argumentsPart := strings.Join(parts[1:], " ")
-	arguments := strings.Split(argumentsPart, ",")
-	bot.ExecuteCommand(command, arguments, message)
-}
-
-// ExecuteCommand executes the command parsed in the OnCommand function
-// **It shouldn't be used by the end-user, but is stayed as public for flexibility**
-func (bot *Bot) ExecuteCommand(command *Command, arguments []string, message *discordgo.MessageCreate) {
-	err := command.Execute(arguments, bot, message)
+	err := command.Execute(bot, interaction)
 	if err != nil {
-		_, _ = bot.Client.ChannelMessageSendEmbed(message.ChannelID,
-			MakeEmbed(bot.Config, &discordgo.MessageEmbed{
-				Title: ":x: Erreur dans l'exécution de la commande",
-				Description: fmt.Sprintf(
-					"**%v**\n\n"+
-						"N'hésitez-pas à contacter %s (%s) si vous pensez que c'est un bogue !",
-					err, bot.Config.Dev.Maintainer.Name,
-					bot.Config.Dev.Maintainer.Link,
-				),
-				Color: bot.Config.Bot.ErrorColor,
-			}),
-		)
+		_ = bot.Client.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+			Type: 4,
+			Data: &discordgo.InteractionApplicationCommandResponseData{
+				Embeds: []*discordgo.MessageEmbed{
+					MakeEmbed(bot.Config, &discordgo.MessageEmbed{
+						Title: ":x: Erreur dans l'exécution de la commande",
+						Description: fmt.Sprintf(
+							"**%v**\n\n"+
+								"N'hésitez-pas à contacter %s (%s) si vous pensez que c'est un bogue !",
+							err, bot.Config.Dev.Maintainer.Name,
+							bot.Config.Dev.Maintainer.Link,
+						),
+						Color: bot.Config.Bot.ErrorColor,
+					}),
+				},
+			},
+		})
 	}
 }

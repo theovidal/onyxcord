@@ -10,3 +10,5 @@ require (
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect
 	gopkg.in/yaml.v2 v2.3.0
 )
+
+replace github.com/bwmarrin/discordgo => github.com/FedorLap2006/discordgo v0.22.1-0.20210217184539-8718e2d37898

@@ -33,19 +33,10 @@ type Config struct {
 		Illustration string
 		// A website on which users can go for further information
 		Website string
-		// Prefix for all the commands (e.g: !)
-		Prefix string
 		// The color theme of the bot (e.g: 7976509)
 		Color int
 		// The color associated to an error (e.g: 12000284)
 		ErrorColor int `yaml:"error_color"`
-	}
-	// A list of command categories
-	Categories map[string]struct {
-		// Their name, displayed in the help command
-		Name string
-		// Their emoji, displayed in the help command
-		Emoji string
 	}
 	// Some assets user can add
 	Assets map[string]string
