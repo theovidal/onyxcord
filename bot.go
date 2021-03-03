@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/go-redis/redis/v8"
@@ -81,7 +82,10 @@ func (bot *Bot) Run(registerHandler bool) {
 
 	if registerHandler {
 		bot.Client.AddHandler(func(_ *discordgo.Session, interaction *discordgo.InteractionCreate) {
-			bot.ExecuteCommand(interaction)
+			err := bot.ExecuteCommand(interaction)
+			if err != nil {
+				log.Println(Red.Sprintf("‼ Error responding to an interaction: %s", err))
+			}
 		})
 	}
 
@@ -91,7 +95,7 @@ func (bot *Bot) Run(registerHandler bool) {
 	if err != nil {
 		log.Fatalf("‼ Error opening connection with bot %s: %s\n", bot.Name, err)
 	}
-	log.Printf("✅ %s#%s logged in!\n", bot.User.Username, bot.User.Discriminator)
+	log.Println(Green.Sprintf("✅ %s#%s logged in!", bot.User.Username, bot.User.Discriminator))
 
 	// Wait here until CTRL-C or other term signal is received.
 	sc := make(chan os.Signal, 1)
@@ -109,49 +113,56 @@ func (bot *Bot) Run(registerHandler bool) {
 }
 
 // ExecuteCommand executes an interaction (or slash command)
-func (bot *Bot) ExecuteCommand(interaction *discordgo.InteractionCreate) {
+func (bot *Bot) ExecuteCommand(interaction *discordgo.InteractionCreate) error {
 	command, exists := bot.Commands[interaction.Data.Name]
 	if !exists {
 		log.Panicf("Interaction with name %s is not implemented into the bot", interaction.Data.Name)
 	}
 
 	if command.ListenInDM && !command.ListenInPublic && interaction.GuildID != "" {
-		_ = bot.Client.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: 4,
-			Data: &discordgo.InteractionApplicationCommandResponseData{
-				Content: "🚫 Cette commande ne peut être executée qu'en message privé.",
-			},
-		})
-		return
+		return bot.UserError(interaction, "🚫 Cette commande ne peut être executée qu'en message privé.")
 	}
 	if command.ListenInPublic && !command.ListenInDM && interaction.GuildID == "" {
-		_ = bot.Client.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: 4,
-			Data: &discordgo.InteractionApplicationCommandResponseData{
-				Content: "🚫 Cette commande ne peut être executée que dans un salon public.",
-			},
-		})
-		return
+		return bot.UserError(interaction, "🚫 Cette commande ne peut être executée que dans un salon public.")
 	}
 
-	err := command.Execute(bot, interaction)
-	if err != nil {
-		_ = bot.Client.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-			Type: 4,
-			Data: &discordgo.InteractionApplicationCommandResponseData{
-				Embeds: []*discordgo.MessageEmbed{
-					MakeEmbed(bot.Config, &discordgo.MessageEmbed{
-						Title: ":x: Erreur dans l'exécution de la commande",
-						Description: fmt.Sprintf(
-							"**%v**\n\n"+
-								"N'hésitez-pas à contacter %s (%s) si vous pensez que c'est un bogue !",
-							err, bot.Config.Dev.Maintainer.Name,
-							bot.Config.Dev.Maintainer.Link,
-						),
-						Color: bot.Config.Bot.ErrorColor,
-					}),
-				},
+	return command.Execute(bot, interaction)
+}
+
+func (bot *Bot) UserError(interaction *discordgo.InteractionCreate, message string) error {
+	return bot.Client.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+		Type: 4,
+		Data: &discordgo.InteractionApplicationCommandResponseData{
+			Embeds: []*discordgo.MessageEmbed{
+				bot.MakeEmbed(&discordgo.MessageEmbed{
+					Title: message,
+					Color: bot.Config.Bot.ErrorColor,
+				}),
 			},
-		})
+		},
+	})
+}
+
+// MakeEmbed returns a Discord embed with the style of the bot
+func (bot *Bot) MakeEmbed(base *discordgo.MessageEmbed) *discordgo.MessageEmbed {
+	color := bot.Config.Bot.Color
+	if base.Color != 0 {
+		color = base.Color
+	}
+	return &discordgo.MessageEmbed{
+		Title:       base.Title,
+		Description: base.Description,
+		Color:       color,
+		Timestamp:   time.Now().Format("2006-01-02T15:04:05-0700"),
+		Footer: &discordgo.MessageEmbedFooter{
+			Text:    fmt.Sprintf("%s v%s", bot.Config.Bot.Name, bot.Config.Dev.Version),
+			IconURL: bot.Config.Bot.Illustration,
+		},
+		Image:     base.Image,
+		Thumbnail: base.Thumbnail,
+		Video:     base.Video,
+		Provider:  base.Provider,
+		Author:    base.Author,
+		Fields:    base.Fields,
 	}
 }

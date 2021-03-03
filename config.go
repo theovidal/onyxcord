@@ -33,6 +33,12 @@ type Config struct {
 		Illustration string
 		// A website on which users can go for further information
 		Website string
+		// The link to invite the bot on a Discord server
+		InviteLink string `yaml:"invite_link"`
+		// Link to the license of the bot (if there's one)
+		License string
+		// Link to support the development (if there's one)
+		Donate string
 		// The color theme of the bot (e.g: 7976509)
 		Color int
 		// The color associated to an error (e.g: 12000284)
