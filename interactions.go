@@ -16,3 +16,6 @@ type Command struct {
 	// Action to execute if the command is triggered
 	Execute func(bot *Bot, interaction *discordgo.InteractionCreate) (err error)
 }
+
+// Component is a shorthand type for functions that handles interactions with components (buttons...)
+type Component func(bot *Bot, interaction *discordgo.InteractionCreate) (err error)

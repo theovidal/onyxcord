@@ -20,8 +20,10 @@ type Bot struct {
 	Name string
 	// The Discord client associated with the bot
 	Client *discordgo.Session
-	// A list of all the commands available on the bot
+	// A list of all the slash commands available on the bot
 	Commands map[string]*Command
+	// A list of all the components handlers (buttons...)
+	Components map[string]Component
 	// The mongodb database attached to the bot (if used)
 	Database *mongo.Client
 	// The Redis cache attached to the bot (if used)
@@ -46,6 +48,7 @@ func RegisterBot(name string) Bot {
 		panic(err)
 	}
 	client.Debug = config.Dev.Debug
+	client.StateEnabled = true
 
 	// Creating the user profile
 	user, err := client.User(config.Bot.ID)
@@ -63,8 +66,14 @@ func RegisterBot(name string) Bot {
 	return bot
 }
 
+// RegisterCommand is a shorthand to add a slash command into the bot
 func (bot *Bot) RegisterCommand(name string, command *Command) {
 	bot.Commands[name] = command
+}
+
+// RegisterComponent is a shorthand to add a component handler into the bot
+func (bot *Bot) RegisterComponent(name string, component Component) {
+	bot.Components[name] = component
 }
 
 // Run starts the bot and connects it to Discord
@@ -82,7 +91,7 @@ func (bot *Bot) Run(registerHandler bool) {
 
 	if registerHandler {
 		bot.Client.AddHandler(func(_ *discordgo.Session, interaction *discordgo.InteractionCreate) {
-			err := bot.ExecuteCommand(interaction)
+			err := bot.HandleInteraction(interaction)
 			if err != nil {
 				log.Println(Red.Sprintf("‼ Error responding to an interaction: %s", err))
 			}
@@ -112,11 +121,20 @@ func (bot *Bot) Run(registerHandler bool) {
 	log.Println("👋 Goodbye!")
 }
 
-// ExecuteCommand executes an interaction (or slash command)
-func (bot *Bot) ExecuteCommand(interaction *discordgo.InteractionCreate) error {
-	command, exists := bot.Commands[interaction.Data.Name]
+// HandleInteraction executes an interaction (or slash command)
+func (bot *Bot) HandleInteraction(interaction *discordgo.InteractionCreate) error {
+	switch interaction.Type {
+	case discordgo.InteractionApplicationCommand: return bot.HandleCommand(interaction)
+	case discordgo.InteractionMessageComponent: return bot.HandleComponent(interaction)
+	}
+	return nil
+}
+
+func (bot *Bot) HandleCommand(interaction *discordgo.InteractionCreate) error {
+	data := interaction.ApplicationCommandData()
+	command, exists := bot.Commands[data.Name]
 	if !exists {
-		log.Panicf("Interaction with name %s is not implemented into the bot", interaction.Data.Name)
+		log.Panicf("Interaction with name %s is not implemented into the bot", data.Name)
 	}
 
 	if command.ListenInDM && !command.ListenInPublic && interaction.GuildID != "" {
@@ -129,10 +147,20 @@ func (bot *Bot) ExecuteCommand(interaction *discordgo.InteractionCreate) error {
 	return command.Execute(bot, interaction)
 }
 
+func (bot *Bot) HandleComponent(interaction *discordgo.InteractionCreate) error {
+	data := interaction.MessageComponentData()
+	component, exists := bot.Components[data.CustomID]
+	if !exists {
+		log.Panicf("Component with custom ID %s is not implemented into the bot", data.CustomID)
+	}
+
+	return component(bot, interaction)
+}
+
 func (bot *Bot) UserError(interaction *discordgo.InteractionCreate, message string) error {
 	return bot.Client.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: 4,
-		Data: &discordgo.InteractionApplicationCommandResponseData{
+		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{
 				bot.MakeEmbed(&discordgo.MessageEmbed{
 					Title: message,
