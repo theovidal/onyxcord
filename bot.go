@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -149,17 +150,20 @@ func (bot *Bot) HandleCommand(interaction *discordgo.InteractionCreate) error {
 
 func (bot *Bot) HandleComponent(interaction *discordgo.InteractionCreate) error {
 	data := interaction.MessageComponentData()
-	component, exists := bot.Components[data.CustomID]
+	parts := strings.Split(data.CustomID, "_")
+	id, args := parts[0], parts[1:]
+
+	component, exists := bot.Components[id]
 	if !exists {
 		log.Panicf("Component with custom ID %s is not implemented into the bot", data.CustomID)
 	}
 
-	return component(bot, interaction)
+	return component(bot, interaction, args)
 }
 
 func (bot *Bot) UserError(interaction *discordgo.InteractionCreate, message string) error {
 	return bot.Client.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
-		Type: 4,
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{
 				bot.MakeEmbed(&discordgo.MessageEmbed{

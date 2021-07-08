@@ -6,7 +6,7 @@ import (
 	"github.com/go-redis/redis/v8"
 )
 
-// OpenDatabase returns the Redis cache client (if needed and taking credentials from the configuration file)
+// OpenCache returns the Redis cache client (if needed and taking credentials from the configuration file)
 func OpenCache(config *Config) (client *redis.Client) {
 	addr := config.Cache.Address + ":" + config.Cache.Port
 	client = redis.NewClient(&redis.Options{

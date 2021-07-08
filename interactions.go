@@ -18,4 +18,4 @@ type Command struct {
 }
 
 // Component is a shorthand type for functions that handles interactions with components (buttons...)
-type Component func(bot *Bot, interaction *discordgo.InteractionCreate) (err error)
+type Component func(bot *Bot, interaction *discordgo.InteractionCreate, args []string) (err error)
