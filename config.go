@@ -33,6 +33,8 @@ type Config struct {
 		Illustration string
 		// A website on which users can go for further information
 		Website string
+		// Discord server link associated to the bot
+		Server string
 		// The link to invite the bot on a Discord server
 		InviteLink string `yaml:"invite_link"`
 		// Link to the license of the bot (if there's one)
