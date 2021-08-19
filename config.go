@@ -20,6 +20,8 @@ type Config struct {
 			Name string
 			Link string
 		}
+		// Wether to automatically register handlers for commands or let the user do it
+		RegisterHandler bool `yaml:"register_handler"`
 	}
 	// Information about the bot itself
 	Bot struct {
@@ -27,7 +29,9 @@ type Config struct {
 		Name string
 		// The token to connect to Discord
 		Token string
-		// Discord's client ID
+		// Discord's application ID
+		AppID string `yaml:"app_id"`
+		// Discord's bot ID
 		ID string
 		// An illustration, for example its logo
 		Illustration string

@@ -17,22 +17,28 @@ import (
 
 // Bot represents the Discord bot with its assets
 type Bot struct {
+	// The Discord client associated with the bot
+	*discordgo.Session
+
 	// Name of the bot
 	Name string
-	// The Discord client associated with the bot
-	Client *discordgo.Session
-	// A list of all the slash commands available on the bot
-	Commands map[string]*Command
+	// The profile of the bot
+	User *discordgo.User
+
+	// The list of commands runnable in the CLI
+	ShellCommands map[string]ShellCommand
+	// The list of application commands to register to Discord
+	ApplicationCommands []*discordgo.ApplicationCommand
+	// A list of all the slash and context menu commands handlers available on the bot
+	CommandHandlers map[string]*Command
 	// A list of all the components handlers (buttons...)
-	Components map[string]Component
+	ComponentHandlers map[string]Component
 	// The mongodb database attached to the bot (if used)
 	Database *mongo.Client
 	// The Redis cache attached to the bot (if used)
 	Cache *redis.Client
 	// The configuration of the bot, as defined in the corresponding file
 	Config *Config
-	// The profile of the bot
-	User *discordgo.User
 }
 
 // RegisterBot creates a new instance of the Discord Bot
@@ -44,41 +50,65 @@ func RegisterBot(name string) Bot {
 	}
 
 	// Creating the bot profile
-	client, err := discordgo.New("Bot " + config.Bot.Token)
+	session, err := discordgo.New("Bot " + config.Bot.Token)
 	if err != nil {
 		panic(err)
 	}
-	client.Debug = config.Dev.Debug
-	client.StateEnabled = true
+	session.StateEnabled = true
 
 	// Creating the user profile
-	user, err := client.User(config.Bot.ID)
+	user, err := session.User(config.Bot.ID)
 	if err != nil {
 		log.Panicf("‼ Error creating the user profile : %v", err)
 	}
 
 	bot := Bot{
-		Name:     name,
-		Client:   client,
-		Commands: make(map[string]*Command),
-		Config:   &config,
-		User:     user,
+		Session:         session,
+
+		Name:            name,
+		User:            user,
+
+		ShellCommands:       DefaultShellCommands,
+		ApplicationCommands: []*discordgo.ApplicationCommand{},
+		CommandHandlers:     make(map[string]*Command),
+		ComponentHandlers:   make(map[string]Component),
+
+		Config:          &config,
 	}
 	return bot
 }
 
-// RegisterCommand is a shorthand to add a slash command into the bot
-func (bot *Bot) RegisterCommand(name string, command *Command) {
-	bot.Commands[name] = command
+// RegisterCommandHandler is a shorthand to add a slash command into the bot
+func (bot *Bot) RegisterCommandHandler(name string, command *Command) {
+	bot.CommandHandlers[name] = command
 }
 
-// RegisterComponent is a shorthand to add a component handler into the bot
-func (bot *Bot) RegisterComponent(name string, component Component) {
-	bot.Components[name] = component
+// RegisterComponentHandler is a shorthand to add a component handler into the bot
+func (bot *Bot) RegisterComponentHandler(name string, component Component) {
+	bot.ComponentHandlers[name] = component
 }
 
-// Run starts the bot and connects it to Discord
-func (bot *Bot) Run(registerHandler bool) {
+// Start starts the Onyxcord application
+func (bot *Bot) Start() {
+	if len(os.Args) < 2 {
+		Help(bot, []string{})
+		os.Exit(0)
+	}
+
+	command, found := bot.ShellCommands[os.Args[1]]
+	if !found {
+		fmt.Printf(
+			"❓ Command %s is not valid. Run help command to get the full list of commands\n",
+			os.Args[1],
+		)
+		os.Exit(1)
+	}
+
+	command.Handler(bot, command.FlagSet.Args())
+}
+
+// Run connects the bot to Discord
+func (bot *Bot) Run() {
 	fmt.Println(" ________  ________       ___    ___ ___    ___ \n|\\   __  \\|\\   ___  \\    |\\  \\  /  /|\\  \\  /  /|\n\\ \\  \\|\\  \\ \\  \\\\ \\  \\   \\ \\  \\/  / | \\  \\/  / /\n \\ \\  \\\\\\  \\ \\  \\\\ \\  \\   \\ \\    / / \\ \\    / / \n  \\ \\  \\\\\\  \\ \\  \\\\ \\  \\   \\/  /  /   /     \\/  \n   \\ \\_______\\ \\__\\\\ \\__\\__/  / /    /  /\\   \\  \n    \\|_______|\\|__| \\|__|\\___/ /    /__/ /\\ __\\ \n                        \\|___|/     |__|/ \\|__| ")
 
 	if bot.Config.Database.Address != "" {
@@ -90,8 +120,8 @@ func (bot *Bot) Run(registerHandler bool) {
 		bot.Cache = OpenCache(bot.Config)
 	}
 
-	if registerHandler {
-		bot.Client.AddHandler(func(_ *discordgo.Session, interaction *discordgo.InteractionCreate) {
+	if bot.Config.Dev.RegisterHandler {
+		bot.AddHandler(func(_ *discordgo.Session, interaction *discordgo.InteractionCreate) {
 			err := bot.HandleInteraction(interaction)
 			if err != nil {
 				log.Println(Red.Sprintf("‼ Error responding to an interaction: %s", err))
@@ -101,7 +131,7 @@ func (bot *Bot) Run(registerHandler bool) {
 
 	log.Println("⏩ Connecting bot...")
 	// Open a websocket connection to Discord and begin listening.
-	err := bot.Client.Open()
+	err := bot.Open()
 	if err != nil {
 		log.Fatalf("‼ Error opening connection with bot %s: %s\n", bot.Name, err)
 	}
@@ -114,7 +144,7 @@ func (bot *Bot) Run(registerHandler bool) {
 
 	log.Println("💤 Closing down bot...")
 
-	bot.Client.Close()
+	bot.Close()
 
 	if bot.Config.Database.Address != "" {
 		bot.Database.Disconnect(context.Background())
@@ -133,7 +163,7 @@ func (bot *Bot) HandleInteraction(interaction *discordgo.InteractionCreate) erro
 
 func (bot *Bot) HandleCommand(interaction *discordgo.InteractionCreate) error {
 	data := interaction.ApplicationCommandData()
-	command, exists := bot.Commands[data.Name]
+	command, exists := bot.CommandHandlers[data.Name]
 	if !exists {
 		log.Panicf("Interaction with name %s is not implemented into the bot", data.Name)
 	}
@@ -153,7 +183,7 @@ func (bot *Bot) HandleComponent(interaction *discordgo.InteractionCreate) error 
 	parts := strings.Split(data.CustomID, "_")
 	id, args := parts[0], parts[1:]
 
-	component, exists := bot.Components[id]
+	component, exists := bot.ComponentHandlers[id]
 	if !exists {
 		log.Panicf("Component with custom ID %s is not implemented into the bot", data.CustomID)
 	}
@@ -162,7 +192,7 @@ func (bot *Bot) HandleComponent(interaction *discordgo.InteractionCreate) error 
 }
 
 func (bot *Bot) UserError(interaction *discordgo.InteractionCreate, message string) error {
-	return bot.Client.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
+	return bot.InteractionRespond(interaction.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
 			Embeds: []*discordgo.MessageEmbed{
